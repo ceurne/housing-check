@@ -141,7 +141,7 @@ td.ok{color:var(--good);font-weight:600} td.no{color:var(--bad);font-weight:600}
 footer{color:var(--muted);font-size:.78rem;max-width:90ch}
 .selectrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 select{font:inherit;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 8px}
-</style>
+@media (max-width:560px){.inputs{grid-template-columns:1fr}.inputs input,.inputs select{font-size:16px!important;padding:8px 10px!important}}</style>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 <script src="data.js"></script>
 </head>
@@ -423,7 +423,7 @@ function renderGrid(res){
       <div class="key" style="display:contents"><dt>${t("room")}</dt><dd class="num" style="color:${r.room>=0?"var(--good)":"var(--bad)"}">${sgn(r.room,eur)}</dd></div>
     </dl>
     <div class="cfoot"><button class="del" data-del="${i}">${t("remove")}</button></div>`;
-    el.addEventListener("click",e=>{if(e.target.closest("input,button"))return;S.sel=i;render()});
+    el.addEventListener("click",e=>{if(e.target.closest("input,button,select,label,option"))return;if(S.sel===i)return;S.sel=i;render()});
     g.appendChild(el);
     const bind=(id,key,num)=>{const inp=el.querySelector("#"+id);
       inp.addEventListener("change",()=>{const v=num?parseFloat(inp.value.replace(/[^\d.,-]/g,"").replace(/\./g,"").replace(",",".")):inp.value;
