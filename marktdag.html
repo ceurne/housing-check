@@ -143,6 +143,7 @@ footer{color:var(--muted);font-size:.78rem;max-width:90ch}
 select{font:inherit;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 8px}
 </style>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<script src="data.js"></script>
 </head>
 <body>
 
@@ -232,12 +233,12 @@ const T={
  nl:{eyebrow:"VOS5 · Verruim je vak · Docentenweergave",title:"De Woningcheck: marktdag",
   sub:"Vergelijk de klanten van alle groepen in één scherm. Zet een marktschok en zie welk advies omslaat.",
   beamer:"Beamerweergave",shockEyebrow:"Marktschok: extra rente",effRate:"Effectieve hypotheekrente",
-  snap:"Leg huidige stand vast",clearSnap:"Referentie wissen",canBuy:"Klanten die deze woning kunnen kopen",
+  snap:"Leg huidige stand vast",clearSnap:"Referentie wissen",canBuy:"Adviezen die nog betaalbaar zijn",
   refOn:"Vergeleken met de vastgelegde stand ({r} rente).",flipped:"{n} advies(en) omgeslagen",
   refOff:"Tip: leg de stand vast vóór je de schok zet. Dan zie je per klant wat er verandert.",
-  clientsH:"Klantdossiers per groep",clientsHint:"Klik op een dossier voor de detailanalyse · getallen zijn aanpasbaar",
-  reset:"Voorbeeldklanten terugzetten",add:"+ Klant toevoegen",remove:"Verwijderen",
-  inc:"Bruto jaarink.",own:"Eigen geld",price:"Prijs advieswoning",
+  clientsH:"Advies per groep",clientsHint:"Vul per groep de klant en het geadviseerde woningnummer in · klik op een kaart voor de detailanalyse",
+  reset:"Voorbeelden terugzetten",add:"+ Advies van een groep toevoegen",remove:"Verwijderen",
+  inc:"Groep",own:"Klant",price:"Woningnummer",noHome:"Vul een woning in",unknown:"Onbekend woningnummer",fits:"Past bij alle wensen",gives:"Geeft op: {w}",misses:"Mist: {w}",enterHome:"Typ het woningnummer dat deze groep heeft geadviseerd (bijv. NH-057).",
   maxMonthly:"Max. maandlast",monthly:"Maandlast woning",maxMortgage:"Max. hypotheek",maxPrice:"Max. koopprijs",room:"Ruimte p/m",
   ok:"Betaalbaar",no:"Niet betaalbaar",was:"Was: {v}",
   cmpH:"Maximale koopprijs tegenover vraagprijs",cmpLead:"De balk is wat de klant maximaal kan betalen (hypotheek + eigen geld). Het streepje is de vraagprijs. Valt het streepje buiten de balk, dan past de woning niet.",
@@ -256,12 +257,12 @@ const T={
  en:{eyebrow:"VOS5 · Broaden your subject · Teacher view",title:"The Housing Check: market day",
   sub:"Compare every group's client on one screen. Apply a market shock and see whose advice flips.",
   beamer:"Projector view",shockEyebrow:"Market shock: extra interest",effRate:"Effective mortgage rate",
-  snap:"Lock current state",clearSnap:"Clear reference",canBuy:"Clients who can buy this home",
+  snap:"Lock current state",clearSnap:"Clear reference",canBuy:"Advice that is still affordable",
   refOn:"Compared with the locked state ({r} interest).",flipped:"{n} verdict(s) flipped",
   refOff:"Tip: lock the state before applying the shock, so you can see what changes for each client.",
-  clientsH:"Client files per group",clientsHint:"Click a file for the detailed analysis · figures are editable",
-  reset:"Restore example clients",add:"+ Add client",remove:"Remove",
-  inc:"Gross income",own:"Own funds",price:"Advised home price",
+  clientsH:"Advice per group",clientsHint:"Fill in each group's client and the listing number they advised · click a card for the detailed analysis",
+  reset:"Restore examples",add:"+ Add a group's advice",remove:"Remove",
+  inc:"Group",own:"Client",price:"Listing number",noHome:"Enter a home",unknown:"Unknown listing number",fits:"Meets all wishes",gives:"Gives up: {w}",misses:"Misses: {w}",enterHome:"Type the listing number this group advised (e.g. NH-057).",
   maxMonthly:"Max. monthly payment",monthly:"Monthly cost of home",maxMortgage:"Max. mortgage",maxPrice:"Max. purchase price",room:"Margin p/m",
   ok:"Affordable",no:"Not affordable",was:"Was: {v}",
   cmpH:"Maximum purchase price versus asking price",cmpLead:"The bar is what the client can pay at most (mortgage + own funds). The tick is the asking price. If the tick sits beyond the bar, the home does not fit.",
@@ -279,21 +280,44 @@ const T={
   p_ig:"Income growth per year",p_ig_h:"Linear: fixed amount per year",yrs:"years"}
 };
 const EXAMPLES=[
- {name:"1. Silva · groep A",nl:"Advies: NH-057, Haarlem-Schalkwijk (optie A, ruim)",en:"Advice: NH-057, Haarlem-Schalkwijk (option A, spacious)",inc:95000,own:40000,price:447500},
- {name:"1. Silva · groep B",nl:"Advies: NH-073, Haarlem-Zuidwest (optie B)",en:"Advice: NH-073, Haarlem-Zuidwest (option B)",inc:95000,own:40000,price:419500},
- {name:"1. Silva · groep C",nl:"Advies: NH-077, Haarlem-Schalkwijk (optie C, veilig)",en:"Advice: NH-077, Haarlem-Schalkwijk (option C, safe)",inc:95000,own:40000,price:399000},
- {name:"2. Tanaka",nl:"Advies: NH-020, Amsterdam (optie A)",en:"Advice: NH-020, Amsterdam (option A)",inc:72000,own:60000,price:372500},
- {name:"3. Mensah & Becker",nl:"Advies: NH-054, Amstelveen (optie B)",en:"Advice: NH-054, Amstelveen (option B)",inc:110000,own:25000,price:469500},
- {name:"4. Hughes",nl:"Advies: NH-207, Hoorn (optie C)",en:"Advice: NH-207, Hoorn (option C)",inc:48000,own:90000,price:272500},
- {name:"5. Kowalski",nl:"Advies: NH-136, Purmerend (optie A)",en:"Advice: NH-136, Purmerend (option A)",inc:78000,own:30000,price:355000},
- {name:"6. Haddad",nl:"Advies: NH-180, Alkmaar (optie B)",en:"Advice: NH-180, Alkmaar (option B)",inc:65000,own:15000,price:274500},
- {name:"7. Park & Reyes",nl:"Advies: NH-026, Amsterdam (optie C)",en:"Advice: NH-026, Amsterdam (option C)",inc:140000,own:80000,price:615000},
- {name:"8. Tremblay",nl:"Advies: NH-086, Hilversum (optie A)",en:"Advice: NH-086, Hilversum (option A)",inc:58000,own:35000,price:282500}
+ {group:"Group A",client:"silva",listing:"NH-057"},
+ {group:"Group B",client:"silva",listing:"NH-073"},
+ {group:"Group C",client:"silva",listing:"NH-077"},
+ {group:"Group D",client:"tanaka",listing:"NH-020"},
+ {group:"Group E",client:"mensah",listing:"NH-054"},
+ {group:"Group F",client:"hughes",listing:"NH-207"},
+ {group:"Group G",client:"kowalski",listing:"NH-136"},
+ {group:"Group H",client:"haddad",listing:"NH-180"},
+ {group:"Group I",client:"park",listing:"NH-026"},
+ {group:"Group J",client:"tremblay",listing:"NH-086"}
 ];
+const HCD=window.HC_DATA||{clients:[],homes:{}};
+const INCOME={silva:[95000,40000],tanaka:[72000,60000],mensah:[110000,25000],hughes:[48000,90000],kowalski:[78000,30000],haddad:[65000,15000],park:[140000,80000],tremblay:[58000,35000]};
+function normId(s){const m=String(s||"").match(/(\d{1,3})/);return m?"NH-"+String(+m[1]).padStart(3,"0"):""}
+function wishOk(h,w){const x=h[w.f];return w.op==="in"?w.v.includes(x):w.op==="notin"?!w.v.includes(x):w.op===">="?x>=w.v:x<=w.v}
+function hydrate(e){
+  const cl=HCD.clients.find(x=>x.id===e.client)||HCD.clients[0];
+  if(cl)e.client=cl.id;
+  const iv=INCOME[e.client]||[50000,10000];e.inc=iv[0];e.own=iv[1];
+  e.listing=normId(e.listing);const h=HCD.homes[e.listing];
+  e.valid=!!h;e.price=h?h.price:0;e.unknown=!!e.listing&&!h;
+  e.name=(e.group||"?")+" · "+(cl?cl.short:"");
+  e.fit="";e.fitText="";e.nl="";e.en="";
+  if(h&&cl){
+    const miss=cl.wishes.filter(w=>!wishOk(h,w));
+    const typ=h.type==="Apartment"?"apartment":h.type.toLowerCase();
+    e.nl=e.en=`${h.city} (${h.area}), ${typ}, ${h.m2} m², ${h.bedrooms} bd, label ${h.label}`;
+    e.fit=!miss.length?"fits":miss.every(w=>w.imp==="flexible")?"gives":"misses";
+    const DN={location:"location",type:"type of home",outdoor:"outdoor space",station:"distance to station",bedrooms:"bedrooms"};
+    e.fitText=miss.map(w=>DN[w.dim]||w.dim).join(", ");
+  }
+  return e;
+}
+
 const S={lang:"nl",beamer:false,rate:.04,shock:0,quote:.25,term:30,pg:.04,ig:.025,
-  clients:EXAMPLES.map(c=>({...c})),sel:0,ref:null};
-const KEY="woningcheck-marktdag-v4";
-try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){Object.assign(S,d);S.ref=null}}catch(e){}
+  clients:EXAMPLES.map(c=>hydrate({...c})),sel:0,ref:null};
+const KEY="woningcheck-marktdag-v5";
+try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){Object.assign(S,d);S.ref=null;S.clients=(S.clients||[]).map(hydrate)}}catch(e){}
 function save(){try{const {ref,...rest}=S;localStorage.setItem(KEY,JSON.stringify(rest))}catch(e){}}
 
 const t=(k,v={})=>(T[S.lang][k]||k).replace(/\{(\w+)\}/g,(_,x)=>v[x]);
@@ -309,7 +333,7 @@ function calc(c,rate){
   const eff=rate??(S.rate+S.shock), f=annuity(eff,S.term);
   const maxMonthly=c.inc/12*S.quote, maxMortgage=maxMonthly*f, loan=Math.max(0,c.price-c.own);
   const monthly=loan/f, maxPrice=maxMortgage+c.own;
-  return {eff,maxMonthly,maxMortgage,loan,monthly,maxPrice,room:maxMonthly-monthly,ok:monthly<=maxMonthly+1e-9};
+  return {eff,maxMonthly,maxMortgage,loan,monthly,maxPrice,room:maxMonthly-monthly,ok:c.valid===false?null:monthly<=maxMonthly+1e-9};
 }
 function timeline(c){
   const f=annuity(S.rate+S.shock,S.term),rows=[];
@@ -358,10 +382,10 @@ function render(){
   document.querySelectorAll("#shockChips .chip").forEach(b=>b.setAttribute("aria-pressed",Math.abs(+b.dataset.v-S.shock)<1e-9));
   document.getElementById("effRate").textContent=pct(S.rate+S.shock,2);
   const res=S.clients.map(c=>calc(c));
-  const nOk=res.filter(r=>r.ok).length;
-  document.getElementById("score").textContent=`${nOk} / ${S.clients.length}`;
+  const nOk=res.filter(r=>r.ok===true).length, nValid=res.filter(r=>r.ok!==null).length;
+  document.getElementById("score").textContent=`${nOk} / ${nValid}`;
   const rn=document.getElementById("refnote");
-  if(S.ref){const flips=S.clients.filter((c,i)=>S.ref[i]&&S.ref[i].ok!==res[i].ok).length;
+  if(S.ref){const flips=S.clients.filter((c,i)=>S.ref[i]&&S.ref[i].ok!==null&&res[i].ok!==null&&S.ref[i].ok!==res[i].ok).length;
     rn.innerHTML=`<span>${t("refOn",{r:"<b>"+pct(S.ref.eff,2)+"</b>"})}</span><b style="color:var(--shock)">${t("flipped",{n:flips})}</b>`;
   }else rn.textContent=t("refOff");
   document.getElementById("clearSnap").hidden=!S.ref;
@@ -380,14 +404,15 @@ function renderGrid(res){
     const d=ref?r.maxPrice-ref.maxPrice:0;
     el.innerHTML=`
     <div class="chead"><div class="who">
-      <input class="name" id="n-${i}" value="${esc(c.name)}" aria-label="Naam">
-      <span class="desc">${esc(c[S.lang]||"")}</span></div>
-      <span class="pill ${r.ok?"ok":"no"}">${r.ok?t("ok"):t("no")}</span></div>
+      <span class="name" style="font-family:var(--f-display);font-weight:700;font-size:1.05rem">${esc(c.name)}</span>
+      <span class="desc">${c.valid?esc(c.listing+" · "+c[S.lang]):esc(c.unknown?t("unknown"):t("enterHome"))}</span>
+      ${c.valid?`<span class="desc" style="color:${c.fit==="misses"?"var(--bad)":"var(--muted)"};font-weight:600">${c.fit==="fits"?t("fits"):t(c.fit,{w:c.fitText})}</span>`:""}</div>
+      ${r.ok===null?`<span class="pill" style="background:var(--sunk);color:var(--muted)">${t("noHome")}</span>`:`<span class="pill ${r.ok?"ok":"no"}">${r.ok?t("ok"):t("no")}</span>`}</div>
     ${ref&&ref.ok!==r.ok?`<div class="was">${t("was",{v:ref.ok?t("ok"):t("no")})}</div>`:""}
     <div class="inputs">
-      <label>${t("inc")}<input id="i-${i}" inputmode="numeric" value="${c.inc}"></label>
-      <label>${t("own")}<input id="o-${i}" inputmode="numeric" value="${c.own}"></label>
-      <label>${t("price")}<input id="p-${i}x" inputmode="numeric" value="${c.price}"></label>
+      <label>${t("inc")}<input id="g-${i}" value="${esc(c.group||"")}"></label>
+      <label>${t("own")}<select id="c-${i}" style="width:100%;min-width:0;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 4px;font-size:.82rem">${HCD.clients.map((x,j)=>`<option value="${x.id}"${x.id===c.client?" selected":""}>${j+1}. ${esc(x.short)}</option>`).join("")}</select></label>
+      <label>${t("price")}<input id="l-${i}" value="${esc(c.listing||"")}" placeholder="NH-…" autocomplete="off"></label>
     </div>
     <div class="gap" title="${t("maxPrice")} / ${t("price")}"><span style="width:${(share*100).toFixed(1)}%;background:${r.ok?"var(--good)":"var(--bad)"}"></span></div>
     <dl class="results">
@@ -403,11 +428,12 @@ function renderGrid(res){
     const bind=(id,key,num)=>{const inp=el.querySelector("#"+id);
       inp.addEventListener("change",()=>{const v=num?parseFloat(inp.value.replace(/[^\d.,-]/g,"").replace(/\./g,"").replace(",",".")):inp.value;
         if(num&&!isFinite(v)){inp.value=c[key];return}c[key]=v;render()})};
-    bind("n-"+i,"name",false);bind("i-"+i,"inc",true);bind("o-"+i,"own",true);bind("p-"+i+"x","price",true);
+    const upd=(id,key)=>{const inp=el.querySelector("#"+id);inp.addEventListener("change",()=>{c[key]=inp.value.trim();hydrate(c);prevOk=null;render()})};
+    upd("g-"+i,"group");upd("c-"+i,"client");upd("l-"+i,"listing");
     el.querySelector("[data-del]").onclick=()=>{S.clients.splice(i,1);if(S.ref)S.ref.splice(i,1);prevOk=null;S.sel=Math.min(S.sel,S.clients.length-1);render()};
   });
   const add=document.createElement("button");add.className="addcard";add.textContent=t("add");
-  add.onclick=()=>{S.clients.push({name:(S.lang==="nl"?"Groep ":"Group ")+(S.clients.length+1),nl:"",en:"",inc:55000,own:15000,price:300000});
+  add.onclick=()=>{S.clients.push(hydrate({group:(S.lang==="nl"?"Groep ":"Group ")+(S.clients.length+1),client:(HCD.clients[0]||{}).id,listing:""}));
     if(S.ref)S.ref.push(null);S.sel=S.clients.length-1;prevOk=null;render()};
   g.appendChild(add);
   if(focusId){const f=document.getElementById(focusId);if(f)f.focus()}
@@ -418,12 +444,13 @@ function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v)));for(const m o
 
 function renderCmp(res){
   const box=document.getElementById("cmpChart");
-  if(!S.clients.length){box.innerHTML="";return}
-  const W=Math.max(560,box.clientWidth||800),LW=130,R=24,rowH=34,top=8,H=top+S.clients.length*rowH+26;
-  const mx=niceMax(Math.max(...S.clients.map((c,i)=>Math.max(c.price,res[i].maxPrice)))*1.02);
+  const L=S.clients.map((c,i)=>({c,r:res[i],i})).filter(x=>x.c.valid);
+  if(!L.length){box.innerHTML="";return}
+  const W=Math.max(560,box.clientWidth||800),LW=200,R=24,rowH=34,top=8,H=top+L.length*rowH+26;
+  const mx=niceMax(Math.max(...L.map(x=>Math.max(x.c.price,x.r.maxPrice)))*1.02);
   const x=v=>LW+(W-LW-R)*v/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${t("cmpH")}">`;
   for(let k=0;k<=4;k++){const v=mx*k/4,xx=x(v);s+=`<line x1="${xx}" x2="${xx}" y1="${top}" y2="${H-22}" stroke="var(--line)"/><text x="${xx}" y="${H-6}" text-anchor="middle">${eurK(v)}</text>`}
-  S.clients.forEach((c,i)=>{const r=res[i],y=top+i*rowH;
+  L.forEach(({c,r,i},k)=>{const y=top+k*rowH;
     s+=`<text class="lbl" x="${LW-10}" y="${y+rowH/2+4}" text-anchor="end">${esc(c.name)}</text>`;
     s+=`<rect x="${LW}" y="${y+8}" width="${Math.max(0,x(r.maxPrice)-LW)}" height="${rowH-16}" rx="4" fill="var(--accent)" opacity="${i===S.sel?1:.75}"/>`;
     const px=x(c.price);s+=`<rect x="${px-1.5}" y="${y+3}" width="3" height="${rowH-6}" rx="1.5" fill="var(--price)"/>`;
@@ -436,7 +463,7 @@ function renderDetail(){
   const sel=document.getElementById("detailSel");
   sel.innerHTML=S.clients.map((c,i)=>`<option value="${i}"${i===S.sel?" selected":""}>${esc(c.name)}</option>`).join("");
   const c=S.clients[S.sel];
-  if(!c){document.getElementById("detailName").textContent="";document.getElementById("timeChart").innerHTML="";document.getElementById("rateTable").innerHTML="";document.getElementById("timeVerdict").innerHTML="";return}
+  if(!c||!c.valid){document.getElementById("detailName").textContent=c?c.name+" · "+t("noHome"):"";document.getElementById("timeChart").innerHTML="";document.getElementById("rateTable").innerHTML="";document.getElementById("timeVerdict").innerHTML="";return}
   document.getElementById("detailName").textContent=c.name+(c[S.lang]?" · "+c[S.lang]:"");
   const rows=timeline(c);
   // time chart
@@ -479,7 +506,7 @@ document.getElementById("beamer").onclick=e=>{S.beamer=!S.beamer;document.docume
 document.getElementById("shock").addEventListener("input",e=>{S.shock=+e.target.value/100;render()});
 document.getElementById("snap").onclick=()=>{S.ref=S.clients.map(c=>calc(c));render()};
 document.getElementById("clearSnap").onclick=()=>{S.ref=null;render()};
-document.getElementById("resetClients").onclick=()=>{S.clients=EXAMPLES.map(c=>({...c}));S.ref=null;S.sel=0;prevOk=null;render()};
+document.getElementById("resetClients").onclick=()=>{S.clients=EXAMPLES.map(c=>hydrate({...c}));S.ref=null;S.sel=0;prevOk=null;render()};
 document.getElementById("detailSel").onchange=e=>{S.sel=+e.target.value;render()};
 let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{renderCmp(S.clients.map(c=>calc(c)));renderDetail()},150)});
 
