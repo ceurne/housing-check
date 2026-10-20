@@ -105,7 +105,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .inputs input{width:100%;min-width:0;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 6px;font-family:var(--f-mono);font-size:.82rem}
 .gap{margin:0 14px 12px;height:10px;background:var(--sunk);border-radius:999px;position:relative;overflow:hidden}
 .gap span{position:absolute;top:0;bottom:0;left:0;border-radius:999px}
-.results{border-top:1px solid var(--line);padding:10px 14px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.84rem}
+.results{margin:0;border-top:1px solid var(--line);padding:10px 14px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.84rem}
 .results dt{color:var(--muted)}
 .results dd{margin:0;text-align:right}
 .results .key dd{font-weight:600}
@@ -243,7 +243,7 @@ const T={
   ok:"Betaalbaar",no:"Niet betaalbaar",was:"Was: {v}",
   cmpH:"Maximale koopprijs tegenover vraagprijs",cmpLead:"De balk is wat de klant maximaal kan betalen (hypotheek + eigen geld). Het streepje is de vraagprijs. Valt het streepje buiten de balk, dan past de woning niet.",
   legMax:"Max. koopprijs",legPrice:"Vraagprijs",detailEyebrow:"Detailanalyse",choose:"Klant",
-  timeH:"Tien jaar vooruit",timeLead:"Huizenprijs groeit exponentieel (vast percentage), inkomen lineair (vast bedrag per jaar). De rente blijft gelijk.",
+  timeH:"Tien jaar vooruit",timeLead:"Huizenprijs groeit exponentieel (vast percentage). Het inkomen stijgt lineair met een vast bedrag per jaar, dat per klant op de kaart staat. De rente blijft gelijk.",incL:"Bruto jaarinkomen",ownL:"Eigen geld",stepL:"Salarisstijging per jaar",
   legPriceGrow:"Huizenprijs",legMaxGrow:"Max. koopprijs",
   tvNow:"<b>Nu betaalbaar.</b> {y}",tvKeep:"De klant houdt de markt de komende tien jaar bij.",tvLose:"Vanaf jaar {n} loopt de klant achter op de markt.",
   tvLater:"<b>Nu niet betaalbaar,</b> maar vanaf jaar {n} wel.",tvNever:"<b>Binnen tien jaar niet betaalbaar.</b> Het gat groeit tot {g} in jaar 10.",
@@ -267,7 +267,7 @@ const T={
   ok:"Affordable",no:"Not affordable",was:"Was: {v}",
   cmpH:"Maximum purchase price versus asking price",cmpLead:"The bar is what the client can pay at most (mortgage + own funds). The tick is the asking price. If the tick sits beyond the bar, the home does not fit.",
   legMax:"Max. purchase price",legPrice:"Asking price",detailEyebrow:"Detailed analysis",choose:"Client",
-  timeH:"Ten years ahead",timeLead:"House prices grow exponentially (fixed percentage), income grows linearly (fixed amount per year). The interest rate stays the same.",
+  timeH:"Ten years ahead",timeLead:"House prices grow exponentially (fixed percentage). Income rises linearly by a fixed amount per year, shown on each client's card. The interest rate stays the same.",incL:"Gross income per year",ownL:"Own funds",stepL:"Salary increase per year",
   legPriceGrow:"House price",legMaxGrow:"Max. purchase price",
   tvNow:"<b>Affordable now.</b> {y}",tvKeep:"The client keeps up with the market for the next ten years.",tvLose:"From year {n} the client falls behind the market.",
   tvLater:"<b>Not affordable now,</b> but it is from year {n}.",tvNever:"<b>Not affordable within ten years.</b> The gap grows to {g} by year 10.",
@@ -292,13 +292,13 @@ const EXAMPLES=[
  {group:"Group J",client:"tremblay",listing:"NH-086"}
 ];
 const HCD=window.HC_DATA||{clients:[],homes:{}};
-const INCOME={silva:[95000,40000],tanaka:[72000,60000],mensah:[110000,25000],hughes:[48000,90000],kowalski:[78000,30000],haddad:[65000,15000],park:[140000,80000],tremblay:[58000,35000]};
+const INCOME={silva:[95000,40000,2375],tanaka:[72000,60000,1800],mensah:[110000,25000,2750],hughes:[48000,90000,1200],kowalski:[78000,30000,1950],haddad:[65000,15000,1625],park:[140000,80000,3500],tremblay:[58000,35000,1450]};
 function normId(s){const m=String(s||"").match(/(\d{1,3})/);return m?"NH-"+String(+m[1]).padStart(3,"0"):""}
 function wishOk(h,w){const x=h[w.f];return w.op==="in"?w.v.includes(x):w.op==="notin"?!w.v.includes(x):w.op===">="?x>=w.v:x<=w.v}
 function hydrate(e){
   const cl=HCD.clients.find(x=>x.id===e.client)||HCD.clients[0];
   if(cl)e.client=cl.id;
-  const iv=INCOME[e.client]||[50000,10000];e.inc=iv[0];e.own=iv[1];
+  const iv=INCOME[e.client]||[50000,10000,1250];e.inc=iv[0];e.own=iv[1];e.step=iv[2];
   e.listing=normId(e.listing);const h=HCD.homes[e.listing];
   e.valid=!!h;e.price=h?h.price:0;e.unknown=!!e.listing&&!h;
   e.name=(e.group||"?")+" · "+(cl?cl.short:"");
@@ -316,7 +316,7 @@ function hydrate(e){
 
 const S={lang:"nl",beamer:false,rate:.04,shock:0,quote:.25,term:30,pg:.04,ig:.025,
   clients:EXAMPLES.map(c=>hydrate({...c})),sel:0,ref:null};
-const KEY="woningcheck-marktdag-v5";
+const KEY="woningcheck-marktdag-v6";
 try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){Object.assign(S,d);S.ref=null;S.clients=(S.clients||[]).map(hydrate)}}catch(e){}
 function save(){try{const {ref,...rest}=S;localStorage.setItem(KEY,JSON.stringify(rest))}catch(e){}}
 
@@ -337,7 +337,7 @@ function calc(c,rate){
 }
 function timeline(c){
   const f=annuity(S.rate+S.shock,S.term),rows=[];
-  for(let y=0;y<=10;y++){const price=c.price*Math.pow(1+S.pg,y),inc=c.inc+c.inc*S.ig*y;
+  for(let y=0;y<=10;y++){const price=c.price*Math.pow(1+S.pg,y),inc=c.inc+(c.step||0)*y;
     const maxP=inc/12*S.quote*f+c.own;rows.push({y,price,inc,maxP,diff:maxP-price,ok:maxP>=price})}
   return rows;
 }
@@ -355,8 +355,7 @@ const PARAMS=[
  {k:"rate",l:"p_rate",h:"p_rate_h",min:0,max:.08,step:.0025,fmt:x=>pct(x,2)},
  {k:"quote",l:"p_quote",h:"p_quote_h",min:.15,max:.4,step:.01,fmt:x=>pct(x,0)},
  {k:"term",l:"p_term",h:"p_term_h",min:10,max:30,step:5,fmt:x=>x+" "+t("yrs")},
- {k:"pg",l:"p_pg",h:"p_pg_h",min:-.04,max:.1,step:.005,fmt:x=>pct(x,1)},
- {k:"ig",l:"p_ig",h:"p_ig_h",min:0,max:.06,step:.005,fmt:x=>pct(x,1)}
+ {k:"pg",l:"p_pg",h:"p_pg_h",min:-.04,max:.1,step:.005,fmt:x=>pct(x,1)}
 ];
 function buildParams(){
   const box=document.getElementById("params");box.innerHTML="";
@@ -415,7 +414,12 @@ function renderGrid(res){
       <label>${t("price")}<input id="l-${i}" value="${esc(c.listing||"")}" placeholder="NH-…" autocomplete="off"></label>
     </div>
     <div class="gap" title="${t("maxPrice")} / ${t("price")}"><span style="width:${(share*100).toFixed(1)}%;background:${r.ok?"var(--good)":"var(--bad)"}"></span></div>
-    <dl class="results">
+    <dl class="results" style="border-bottom:1px dashed var(--line);padding-bottom:10px">
+      <dt>${t("incL")}</dt><dd class="num">${eur(c.inc)}</dd>
+      <dt>${t("ownL")}</dt><dd class="num">${eur(c.own)}</dd>
+      <dt>${t("stepL")}</dt><dd class="num">+${eur(c.step||0)}</dd>
+    </dl>
+    <dl class="results" style="border-top:0;padding-top:8px">
       <dt>${t("maxMonthly")}</dt><dd class="num">${eur(r.maxMonthly)}</dd>
       <dt>${t("monthly")}</dt><dd class="num">${eur(r.monthly)}</dd>
       <dt>${t("maxMortgage")}</dt><dd class="num">${eur(r.maxMortgage)}</dd>
