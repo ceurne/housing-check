@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* Layout: a mail client. Client list on the left, the open thread on the right, composer pinned under the thread. */
+/* Layout: step 1 pick a client from a card menu, step 2 a single mail thread with the composer under it. */
 :root{
   --bg:#EEF2F2; --surface:#FFFFFF; --sunk:#E3E9E9; --line:#CBD5D5;
   --ink:#122224; --muted:#56696B;
@@ -77,6 +77,21 @@ header p{margin:4px 0 0;color:var(--muted);max-width:64ch}
 .hint{font-size:.78rem;color:var(--muted);max-width:60ch}
 .note{font-size:.8rem;color:var(--warn)}
 footer{color:var(--muted);font-size:.78rem;max-width:90ch}
+.start{display:flex;flex-direction:column;gap:18px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
+.step h2 .n{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);margin-right:8px;vertical-align:2px}
+.step input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 12px;width:320px;max-width:100%}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ccard{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:var(--r);padding:14px;min-width:0}
+.ccard:hover{border-color:var(--accent);background:var(--surface)}
+.ccard .av{width:40px;height:40px;font-size:.9rem}
+.ccard .it b{font-size:1rem}
+.ccard .it span{white-space:normal}
+.ccard .go{margin-top:6px;font-size:.78rem;font-weight:600;color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.bar .who{display:flex;gap:12px;align-items:center;min-width:0}
+.app.single{grid-template-columns:1fr}
+
 @media (prefers-reduced-motion:no-preference){.msg.new{animation:in .25s ease}@keyframes in{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}}
 </style>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}footer a{color:var(--accent)}</style>
@@ -90,67 +105,92 @@ footer{color:var(--muted);font-size:.78rem;max-width:90ch}
     <div>
       <span class="eyebrow">The Housing Check · Advisor mailbox</span>
       <h1>Client Inbox</h1>
-      <p>Read your client's e-mail and write back in English. Ask about anything you need to give good advice, for example which wish matters most, or what they think of a home you found. Your client will answer.</p>
-    </div>
-    <div class="me">
-      <label for="advisor">Your name or group</label>
-      <input id="advisor" placeholder="e.g. Group 3" maxlength="40">
+      <p>You are a junior mortgage advisor. Choose your client, read their e-mail and write back in English. Ask what you need to know, or tell them about a home you found. Your client will answer.</p>
     </div>
   </header>
 
-  <div class="app">
-    <nav class="list" id="list" aria-label="Clients"></nav>
-    <section class="thread" aria-live="polite">
-      <div class="thead">
-        <div><span class="eyebrow" id="tfrom"></span><h2 id="tsubject"></h2></div>
-        <div class="tools">
-                    <button class="btn" id="copy">Copy conversation</button>
-          <button class="btn" id="reset">Start over</button>
-        </div>
-      </div>
-      <div class="msgs" id="msgs"></div>
-      <form class="compose" id="form">
-        <label for="text" class="eyebrow">Your reply</label>
-        <textarea id="text" placeholder="Dear …,&#10;&#10;Thank you for your e-mail. I have a question about …"></textarea>
-        <div class="crow">
-          <span class="hint">Write in English. Ask one or two clear questions per e-mail. Your client does not know how much they can borrow; that is your job.</span>
-          <button class="btn primary" id="send" type="submit">Send</button>
-        </div>
-        <span class="note" id="note" hidden></span>
-      </form>
-    </section>
-  </div>
+  <section class="start" id="start">
+    <div class="step">
+      <h2><span class="n">1</span>Who are you?</h2>
+      <label for="advisor" class="eyebrow">Your name or group</label>
+      <input id="advisor" placeholder="e.g. Group 3 (Sem and Noor)" maxlength="40" autocomplete="off">
+      <span class="note" id="startNote" hidden></span>
+    </div>
+    <div class="step">
+      <h2><span class="n">2</span>Which client did your teacher give you?</h2>
+      <div class="cards" id="cards"></div>
+    </div>
+  </section>
 
-  <footer><a href="marktdag.html">Teacher: market day dashboard</a> · All clients and homes are fictional. Your conversations are saved only in this browser on this device; nothing is sent anywhere. Tip: mention a listing number (for example NH-057) and your client will tell you what they think of that home.</footer>
+  <section id="chat" hidden>
+    <div class="bar">
+      <div class="who"><span class="av" id="barAv"></span><div><span class="eyebrow">Your client</span><h2 id="barName"></h2></div></div>
+      <div class="tools"><span class="hint" id="barMe"></span><button class="btn" id="change" type="button">Change client</button></div>
+    </div>
+    <div class="app single" style="margin-top:16px">
+      <section class="thread" aria-live="polite">
+        <div class="thead">
+          <div><span class="eyebrow" id="tfrom"></span><h2 id="tsubject"></h2></div>
+          <div class="tools">
+            <button class="btn" id="copy" type="button">Copy conversation</button>
+            <button class="btn" id="reset" type="button">Start over</button>
+          </div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+        <form class="compose" id="form">
+          <label for="text" class="eyebrow">Your reply</label>
+          <textarea id="text" placeholder="Dear …,&#10;&#10;Thank you for your e-mail. I have a question about …"></textarea>
+          <div class="crow">
+            <span class="hint">Write in English. Ask one or two clear questions per e-mail. Mention a listing number (for example NH-057) to ask what your client thinks of a home. Your client does not know how much they can borrow; that is your job.</span>
+            <button class="btn primary" id="send" type="submit">Send</button>
+          </div>
+          <span class="note" id="note" hidden></span>
+        </form>
+      </section>
+    </div>
+  </section>
+
+  <footer><a href="marktdag.html">Teacher: market day dashboard</a> · All clients and homes are fictional. Your conversations are saved only in this browser on this device; nothing is sent anywhere.</footer>
 </div>
 
 <script>
 const CLIENTS = window.HC_DATA.clients;
-const KEY = "housing-check-inbox-v1";
-let S = { sel: CLIENTS[0].id, advisor: "", threads: {} };
+const KEY = "housing-check-inbox-v2";
+let S = { sel: null, advisor: "", threads: {} };
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d) S = Object.assign(S, d); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const $ = id => document.getElementById(id);
-const byId = id => CLIENTS.find(c => c.id === id) || CLIENTS[0];
+const byId = id => CLIENTS.find(c => c.id === id);
 const thread = id => (S.threads[id] = S.threads[id] || []);
 const initials = n => n.split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
 const stamp = () => new Date().toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" });
-
 let busy = false;
-/* ---------- render ---------- */
-function renderList() {
-  const nav = $("list"); nav.innerHTML = "";
-  for (const c of CLIENTS) {
-    const t = thread(c.id), last = t[t.length - 1];
+
+/* ---------- start screen ---------- */
+function renderStart() {
+  $("start").hidden = false; $("chat").hidden = true;
+  $("advisor").value = S.advisor;
+  const box = $("cards"); box.innerHTML = "";
+  CLIENTS.forEach((c, i) => {
     const b = document.createElement("button");
-    b.className = "item"; b.type = "button"; b.setAttribute("aria-current", c.id === S.sel);
-    b.innerHTML = `<span class="av">${initials(c.short)}</span><span class="it"><b></b><span></span></span><span class="count">${t.length ? t.filter(m => m.who === "advisor").length + " sent" : ""}</span>`;
-    b.querySelector("b").textContent = c.short;
-    b.querySelector(".it span").textContent = last ? (last.who === "client" ? c.sign + ": " : "You: ") + last.text.replace(/\s+/g, " ").slice(0, 60) : c.from + " · " + c.subject;
-    b.onclick = () => { S.sel = c.id; save(); render(); };
-    nav.appendChild(b);
-  }
+    b.type = "button"; b.className = "ccard";
+    const n = thread(c.id).filter(m => m.who === "advisor").length;
+    b.innerHTML = `<span class="av"></span><span class="it"><b></b><span class="from"></span><span class="look"></span><span class="go"></span></span>`;
+    b.querySelector(".av").textContent = initials(c.short);
+    b.querySelector("b").textContent = (i + 1) + ". " + c.short;
+    b.querySelector(".from").textContent = "From " + c.from;
+    b.querySelector(".look").textContent = "Looking for a home in " + c.cities.join(" or ");
+    b.querySelector(".go").textContent = n ? `Continue (${n} e-mail${n === 1 ? "" : "s"} sent) →` : "Open mailbox →";
+    b.onclick = () => {
+      const name = $("advisor").value.trim();
+      if (name.length < 2) { const n = $("startNote"); n.textContent = "Fill in your name or group first."; n.hidden = false; $("advisor").focus(); return; }
+      S.advisor = name; S.sel = c.id; save(); renderChat(); window.scrollTo(0, 0); $("text").focus();
+    };
+    box.appendChild(b);
+  });
 }
+
+/* ---------- chat screen ---------- */
 function msgEl(who, from, to, when, text, isNew) {
   const d = document.createElement("article");
   d.className = "msg " + who + (isNew ? " new" : "");
@@ -159,24 +199,27 @@ function msgEl(who, from, to, when, text, isNew) {
   d.querySelector(".when").textContent = when; d.querySelector(".body").textContent = text;
   return d;
 }
-function renderThread(newIdx = -1) {
-  const c = byId(S.sel), box = $("msgs"), me = S.advisor || "Advisor";
-  $("tfrom").textContent = c.name + " · " + c.from; $("tsubject").textContent = c.subject;
-  box.innerHTML = "";
+function renderChat(newIdx = -1) {
+  const c = byId(S.sel); if (!c) return renderStart();
+  $("start").hidden = true; $("chat").hidden = false;
+  const me = S.advisor || "Advisor";
+  $("barAv").textContent = initials(c.short); $("barName").textContent = c.short + " · " + c.from; $("barMe").textContent = "Advisor: " + me;
+  $("tfrom").textContent = c.name; $("tsubject").textContent = c.subject;
+  const box = $("msgs"); box.innerHTML = "";
   box.appendChild(msgEl("client", c.name, me, "First e-mail", c.email));
   thread(c.id).forEach((m, i) => box.appendChild(msgEl(m.who, m.who === "advisor" ? me : c.name, m.who === "advisor" ? c.name : me, m.when, m.text, i === newIdx)));
   box.scrollTop = box.scrollHeight;
 }
-function render(newIdx) { renderList(); renderThread(newIdx); $("advisor").value = S.advisor; }
 
 /* ---------- actions ---------- */
-$("advisor").addEventListener("input", e => { S.advisor = e.target.value.trim(); save(); renderThread(); });
+$("advisor").addEventListener("input", e => { S.advisor = e.target.value.trim(); $("startNote").hidden = true; save(); });
+$("change").addEventListener("click", () => { S.sel = null; save(); renderStart(); });
 $("form").addEventListener("submit", async e => {
   e.preventDefault(); if (busy) return;
   const ta = $("text"), text = ta.value.trim(), note = $("note"); note.hidden = true;
   if (text.length < 10) { note.textContent = "Write a little more before you send."; note.hidden = false; return; }
   const c = byId(S.sel), t = thread(c.id);
-  t.push({ who: "advisor", text, when: stamp() }); ta.value = ""; save(); render(t.length - 1);
+  t.push({ who: "advisor", text, when: stamp() }); ta.value = ""; save(); renderChat(t.length - 1);
   busy = true; $("send").disabled = true;
   const box = $("msgs"), typing = document.createElement("div");
   typing.className = "typing"; typing.textContent = c.sign + " is writing…"; box.appendChild(typing); box.scrollTop = box.scrollHeight;
@@ -184,11 +227,11 @@ $("form").addEventListener("submit", async e => {
   const reply = window.HousingCheckEngine.reply(c, text, window.HC_DATA.homes, S.advisor);
   typing.remove();
   t.push({ who: "client", text: reply, when: stamp() }); save();
-  busy = false; $("send").disabled = false; render(t.length - 1);
+  busy = false; $("send").disabled = false; renderChat(t.length - 1);
 });
 $("reset").addEventListener("click", () => {
   const b = $("reset");
-  if (b.dataset.armed) { S.threads[S.sel] = []; save(); delete b.dataset.armed; b.textContent = "Start over"; render(); return; }
+  if (b.dataset.armed) { S.threads[S.sel] = []; save(); delete b.dataset.armed; b.textContent = "Start over"; renderChat(); return; }
   b.dataset.armed = "1"; b.textContent = "Click again to delete";
   setTimeout(() => { delete b.dataset.armed; b.textContent = "Start over"; }, 3000);
 });
@@ -196,10 +239,10 @@ $("copy").addEventListener("click", async () => {
   const c = byId(S.sel), me = S.advisor || "Advisor";
   const all = [`From: ${c.name}\n${c.email}`, ...thread(c.id).map(m => `From: ${m.who === "advisor" ? me : c.name} (${m.when})\n${m.text}`)].join("\n\n---\n\n");
   try { await navigator.clipboard.writeText(all); $("copy").textContent = "Copied"; }
-  catch (e) { const ta = $("text"); ta.value = all; ta.select(); $("copy").textContent = "Selected, press Ctrl+C"; }
+  catch (e) { $("copy").textContent = "Copy not allowed here"; }
   setTimeout(() => $("copy").textContent = "Copy conversation", 2000);
 });
-render();
+S.sel && byId(S.sel) ? renderChat() : renderStart();
 </script>
 
 </body>

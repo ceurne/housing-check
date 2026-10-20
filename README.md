@@ -6,14 +6,14 @@ Web tools for **The Housing Check**, a VOS5 interdisciplinary project (economics
 
 | Page | For | What it does |
 |---|---|---|
-| `index.html` | Students | **Client Inbox.** Students e-mail one of eight fictional clients in English and get a reply in character. Clients answer questions about their wishes, money, plans and situation, and react positively or negatively when a student proposes a home by its listing number (NH-001 to NH-240). |
+| `index.html` | Students | **Client Inbox.** Students enter their name or group, choose their client from a menu, and e-mail one of eight fictional clients in English and get a reply in character. Clients answer questions about their wishes, money, plans and situation, and react positively or negatively when a student proposes a home by its listing number (NH-001 to NH-240). |
 | `marktdag.html` | Teacher | **Market day dashboard.** Shows all clients side by side and lets the teacher apply an interest-rate shock to see whose advice flips. |
 
 ## How the Client Inbox works
 
 There is no AI and no server. Replies are built in the browser from fixed rules (`engine.js`) and client data (`data.js`). Nothing a student types leaves their browser; conversations are stored only in that browser's local storage.
 
-The clients' priorities match the answer key in the Teacher Guide. For example, the Silva family will tell students that the distance to the station is their least important wish.
+The clients' priorities match the answer key in the Teacher Guide. Every client has exactly three homes that fit (see `src/options.json`): option A becomes unaffordable at +0.5% interest, option B at +1%, and option C survives both. When students propose two or three of them, the client compares them and asks which one they advise. For example, the Silva family will tell students that the distance to the station is their least important wish.
 
 Note: the client data is readable in `data.js`. Students who open the source code can see the answers, so tell them the inbox is a tool for practising, not a puzzle.
 

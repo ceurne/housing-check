@@ -163,11 +163,32 @@
       else if (["F", "G"].includes(h.label)) s += ` The energy label is ${h.label}. Is that a problem?`;
       if (c.id === "tanaka" && h.year < 1960) s += " An older building probably has thick walls, which is good for my cello!";
       if (c.id === "kowalski" && h.type === "Corner house") s += " And a corner house, my first idea!";
+      const SMALL = { silva: 95, tanaka: 45, mensah: 80, hughes: 90, kowalski: 90, haddad: 62, park: 105, tremblay: 58 };
+      if (h.m2 < (SMALL[c.id] || 0)) s += ` It is a bit small for ${P.us}, but ${P.we} could live with it.`;
+      if (h.year >= 2010) s += ` It is a new home, so ${P.we} would not need to do any work.`;
       if (saidTooExp) s += ` You say it is too expensive for ${P.us}? That is a pity.`;
       else if (saidAffordable) s += ` And you say ${P.we} can afford it? Great news!`;
       else s += ` Can ${P.we} afford it? You know that better than ${P.we} do.`;
     }
     return { text: s, worst, missing: miss.length, tooExp: !!saidTooExp };
+  }
+  const LABEL_RANK = { "A+": 0, A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7 };
+  function compareHomes(c, hs) {
+    const P = pron(c);
+    const pts = hs.map(h => ({ h, plus: [] }));
+    const best = (fn, txt, lowIsBest) => {
+      const vals = hs.map(fn), target = lowIsBest ? Math.min(...vals) : Math.max(...vals);
+      if (vals.filter(v => v === target).length === hs.length) return;
+      pts.forEach((p, i) => { if (vals[i] === target) p.plus.push(txt); });
+    };
+    best(h => h.price, "is the cheapest", true);
+    best(h => h.m2, "is the biggest", false);
+    best(h => LABEL_RANK[h.label] ?? 9, "has the best energy label", true);
+    if (c.wishes.some(w => w.dim === "station") || ["tanaka","tremblay","haddad","silva"].includes(c.id)) best(h => h.station_km, "is the closest to the station", true);
+    best(h => h.year, "is the newest", false);
+    const lines = pts.map(p => p.plus.length ? `${p.h.id} ${joinList(p.plus)}` : `${p.h.id} is somewhere in between`);
+    const all = hs.length === 2 ? "both" : "all of them";
+    return `${P.We} like ${all}! ${joinList(lines)}. ${P.We} find it difficult to choose. Which one do you advise, and why? What happens with each home if the interest rate goes up?`;
   }
   function joinList(a) { return a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; }
   function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
@@ -223,11 +244,10 @@
       }
       reacts.forEach((r, i) => add("home" + i, r.text, -100 + i));
       const ok = reacts.filter(r => r.id && !r.tooExp && (r.worst === "none" || r.worst === "flexible"));
+      if (/\b(safer|safe|buffer|risk|if (the )?(interest|rates?)[^.?!]{0,20}(rise|go up|goes up|increase))\b/i.test(t) && ok.length)
+        add("safe", `Thank you for thinking about the risk. If the interest rate goes up, ${P.we} still want to be able to pay ${P.our} mortgage, so that is important to ${P.us}.`, -45);
       if (anyTooExp && !ok.length) add("tooExp", fill(c.common.tooExpensive, c), -40);
-      if (ok.length > 1) {
-        ok.sort((a, b) => (a.worst === "none" ? 0 : 1) - (b.worst === "none" ? 0 : 1) || a.missing - b.missing);
-        add("pref", `If ${P.we} have to choose, ${P.we} prefer ${ok[0].id}. But ${P.we} would like to hear what you think.`, -50);
-      }
+      if (ok.length > 1) add("pref", compareHomes(c, ok.map(r => homes[r.id])), -50);
     }
 
     // 2. wish dimensions and intents, kept in order of appearance
@@ -261,6 +281,7 @@
       for (const k of order) {
         if (!I[k].test(s)) continue;
         if (k === "interest" && I.mortgageType.test(s)) continue;
+        if ((k === "risk" || k === "interest") && used.has("safe")) continue;
         if (k === "partner" && /^(joana|kwame|marta|ji-?woo|daniel|lena)$/i.test((s.match(I.partner) || [""])[0]) && ORDER_KEYS.some(x => x !== "partner" && I[x].test(s))) continue;
         if ((k === "wait" && used.has("timing")) || (k === "timing" && used.has("wait"))) continue;
         if (k === "pets" && used.has("dim:outdoor")) continue;

@@ -279,18 +279,20 @@ const T={
   p_ig:"Income growth per year",p_ig_h:"Linear: fixed amount per year",yrs:"years"}
 };
 const EXAMPLES=[
- {name:"1. Silva",nl:"Portugal · advies: NH-057, Haarlem (zonder stationswens)",en:"Portugal · advice: NH-057, Haarlem (station wish dropped)",inc:95000,own:40000,price:447500},
- {name:"2. Tanaka",nl:"Japan · advies: NH-020, Amsterdam",en:"Japan · advice: NH-020, Amsterdam",inc:72000,own:60000,price:372500},
- {name:"3. Mensah & Becker",nl:"Ghana / Duitsland · advies: NH-005, Amsterdam (appartement)",en:"Ghana / Germany · advice: NH-005, Amsterdam (apartment)",inc:110000,own:25000,price:495000},
- {name:"4. Hughes",nl:"Verenigd Koninkrijk · advies: NH-233, Den Helder",en:"United Kingdom · advice: NH-233, Den Helder",inc:48000,own:90000,price:285000},
- {name:"5. Kowalski",nl:"Polen · advies: NH-136, Purmerend",en:"Poland · advice: NH-136, Purmerend",inc:78000,own:30000,price:355000},
- {name:"6. Haddad",nl:"Libanon · advies: NH-159, Alkmaar (verder van station)",en:"Lebanon · advice: NH-159, Alkmaar (further from station)",inc:65000,own:15000,price:289000},
- {name:"7. Park & Reyes",nl:"Zuid-Korea / Filipijnen · advies: NH-016, Amsterdam",en:"South Korea / Philippines · advice: NH-016, Amsterdam",inc:140000,own:80000,price:650000},
- {name:"8. Tremblay",nl:"Canada · advies: NH-086, Hilversum (zonder tuin)",en:"Canada · advice: NH-086, Hilversum (no garden)",inc:58000,own:35000,price:282500}
+ {name:"1. Silva · groep A",nl:"Advies: NH-057, Haarlem-Schalkwijk (optie A, ruim)",en:"Advice: NH-057, Haarlem-Schalkwijk (option A, spacious)",inc:95000,own:40000,price:447500},
+ {name:"1. Silva · groep B",nl:"Advies: NH-073, Haarlem-Zuidwest (optie B)",en:"Advice: NH-073, Haarlem-Zuidwest (option B)",inc:95000,own:40000,price:419500},
+ {name:"1. Silva · groep C",nl:"Advies: NH-077, Haarlem-Schalkwijk (optie C, veilig)",en:"Advice: NH-077, Haarlem-Schalkwijk (option C, safe)",inc:95000,own:40000,price:399000},
+ {name:"2. Tanaka",nl:"Advies: NH-020, Amsterdam (optie A)",en:"Advice: NH-020, Amsterdam (option A)",inc:72000,own:60000,price:372500},
+ {name:"3. Mensah & Becker",nl:"Advies: NH-054, Amstelveen (optie B)",en:"Advice: NH-054, Amstelveen (option B)",inc:110000,own:25000,price:469500},
+ {name:"4. Hughes",nl:"Advies: NH-207, Hoorn (optie C)",en:"Advice: NH-207, Hoorn (option C)",inc:48000,own:90000,price:272500},
+ {name:"5. Kowalski",nl:"Advies: NH-136, Purmerend (optie A)",en:"Advice: NH-136, Purmerend (option A)",inc:78000,own:30000,price:355000},
+ {name:"6. Haddad",nl:"Advies: NH-180, Alkmaar (optie B)",en:"Advice: NH-180, Alkmaar (option B)",inc:65000,own:15000,price:274500},
+ {name:"7. Park & Reyes",nl:"Advies: NH-026, Amsterdam (optie C)",en:"Advice: NH-026, Amsterdam (option C)",inc:140000,own:80000,price:615000},
+ {name:"8. Tremblay",nl:"Advies: NH-086, Hilversum (optie A)",en:"Advice: NH-086, Hilversum (option A)",inc:58000,own:35000,price:282500}
 ];
 const S={lang:"nl",beamer:false,rate:.04,shock:0,quote:.25,term:30,pg:.04,ig:.025,
   clients:EXAMPLES.map(c=>({...c})),sel:0,ref:null};
-const KEY="woningcheck-marktdag-v3";
+const KEY="woningcheck-marktdag-v4";
 try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){Object.assign(S,d);S.ref=null}}catch(e){}
 function save(){try{const {ref,...rest}=S;localStorage.setItem(KEY,JSON.stringify(rest))}catch(e){}}
 
