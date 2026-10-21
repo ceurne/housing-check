@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Woningcheck Marktdag</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a market-control desk on top, client "dossiers" as a grid, then one dossier opened in detail. */
+:root{
+  --bg:#EEF2F2; --surface:#FFFFFF; --sunk:#E3E9E9; --line:#CBD5D5;
+  --ink:#122224; --muted:#56696B;
+  --accent:#0D6B66; --accent-ink:#FFFFFF; --accent-soft:#D3E9E7;
+  --shock:#B5600E; --shock-soft:#F6E5D2;
+  --good:#1E7A44; --good-soft:#DCF0E2; --bad:#B23A35; --bad-soft:#F6DEDC;
+  --price:#3A4B8C;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1718; --surface:#172324; --sunk:#1F2E30; --line:#2E4244;
+  --ink:#E4EEEE; --muted:#93A8AA;
+  --accent:#4FB8B0; --accent-ink:#0B1A1A; --accent-soft:#1D3B3A;
+  --shock:#F0A458; --shock-soft:#3A2A19;
+  --good:#5CCB8A; --good-soft:#18352A; --bad:#F0827C; --bad-soft:#3D2120;
+  --price:#9AA9F0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1718; --surface:#172324; --sunk:#1F2E30; --line:#2E4244;
+  --ink:#E4EEEE; --muted:#93A8AA;
+  --accent:#4FB8B0; --accent-ink:#0B1A1A; --accent-soft:#1D3B3A;
+  --shock:#F0A458; --shock-soft:#3A2A19;
+  --good:#5CCB8A; --good-soft:#18352A; --bad:#F0827C; --bad-soft:#3D2120;
+  --price:#9AA9F0; color-scheme:dark}
+html{font-size:15px}
+html.beamer{font-size:19px}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:2rem;font-weight:800}
+h2{font-size:1.3rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+header{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+.brand{display:flex;flex-direction:column;gap:4px;min-width:0}
+.brand p{margin:0;color:var(--muted);max-width:62ch}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:3px}
+.seg button{border:0;background:none;color:var(--muted);padding:5px 12px;border-radius:999px;font-weight:600;font-size:.85rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 13px;border-radius:999px;font-weight:600;font-size:.85rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.shock{background:var(--shock);color:var(--surface);border-color:var(--shock)}
+
+/* market desk */
+.desk{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,2fr);overflow:hidden}
+@media (max-width:900px){.desk{grid-template-columns:1fr}}
+.shockpanel{background:var(--shock-soft);padding:18px;display:flex;flex-direction:column;gap:12px;border-right:1px solid var(--line)}
+@media (max-width:900px){.shockpanel{border-right:0;border-bottom:1px solid var(--line)}}
+.shockpanel .big{font-family:var(--f-display);font-weight:800;font-size:2.6rem;line-height:1;color:var(--shock)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--shock);background:transparent;color:var(--shock);border-radius:999px;padding:4px 11px;font-family:var(--f-mono);font-size:.82rem;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--shock);color:var(--surface)}
+.effrate{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;color:var(--ink)}
+.params{padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px 22px}
+.param{display:flex;flex-direction:column;gap:6px;min-width:0}
+.param label{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;font-weight:500}
+.param label .num{color:var(--accent);font-weight:600}
+.param small{color:var(--muted);font-size:.76rem}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* summary */
+.summary{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center}
+.summary .score{font-family:var(--f-display);font-weight:800;font-size:1.6rem}
+.refnote{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}
+.refnote b{color:var(--ink)}
+
+/* clients */
+.sechead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0;cursor:pointer;transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.card.flip{animation:flip .9s ease}
+@keyframes flip{0%{box-shadow:0 0 0 0 var(--shock)}40%{box-shadow:0 0 0 6px var(--shock)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.card.flip{animation:none}}
+.chead{padding:14px 14px 10px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.chead .who{min-width:0;display:flex;flex-direction:column;gap:2px}
+.chead input.name{font-family:var(--f-display);font-weight:700;font-size:1.05rem;border:0;background:transparent;color:var(--ink);padding:0;width:100%;min-width:0}
+.chead .desc{color:var(--muted);font-size:.8rem}
+.pill{flex:none;font-size:.74rem;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--good-soft);color:var(--good)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:0 14px 12px}
+.inputs label{display:flex;flex-direction:column;gap:2px;font-size:.7rem;color:var(--muted);min-width:0}
+.inputs input{width:100%;min-width:0;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 6px;font-family:var(--f-mono);font-size:.82rem}
+.gap{margin:0 14px 12px;height:10px;background:var(--sunk);border-radius:999px;position:relative;overflow:hidden}
+.gap span{position:absolute;top:0;bottom:0;left:0;border-radius:999px}
+.results{margin:0;border-top:1px solid var(--line);padding:10px 14px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.84rem}
+.results dt{color:var(--muted)}
+.results dd{margin:0;text-align:right}
+.results .key dd{font-weight:600}
+.delta{font-size:.74rem;margin-left:6px}
+.delta.up{color:var(--good)} .delta.down{color:var(--bad)}
+.was{font-size:.74rem;color:var(--shock);font-weight:600;padding:0 14px 10px}
+.cfoot{margin-top:auto;display:flex;justify-content:flex-end;padding:0 10px 8px}
+.del{border:0;background:none;color:var(--muted);font-size:.75rem;padding:4px 6px}
+.del:hover{color:var(--bad)}
+.addcard{border:1.5px dashed var(--line);border-radius:var(--r);background:transparent;color:var(--muted);min-height:160px;font-weight:600}
+.addcard:hover{border-color:var(--accent);color:var(--accent)}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel p.lead{margin:0;color:var(--muted);font-size:.88rem;max-width:72ch}
+.two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media (max-width:960px){.two{grid-template-columns:1fr}}
+.chartbox{overflow-x:auto}
+svg text{fill:var(--muted);font-family:var(--f-mono);font-size:11px}
+svg .lbl{fill:var(--ink);font-family:var(--f-body);font-size:12px;font-weight:500}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.verdict-line{font-size:.95rem;padding:10px 12px;border-radius:8px;background:var(--sunk)}
+.verdict-line b{font-family:var(--f-display)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+tr.cur td{background:var(--accent-soft);font-weight:600}
+td.ok{color:var(--good);font-weight:600} td.no{color:var(--bad);font-weight:600}
+.prompt{border-left:3px solid var(--accent);padding:6px 12px;font-size:.86rem;background:var(--accent-soft);border-radius:0 6px 6px 0}
+footer{color:var(--muted);font-size:.78rem;max-width:90ch}
+.selectrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+select{font:inherit;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 8px}
+@media (max-width:560px){.inputs{grid-template-columns:1fr}.inputs input,.inputs select{font-size:16px!important;padding:8px 10px!important}}</style>
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<script src="data.js"></script>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="eyebrow" data-t="eyebrow"></span>
+      <h1 data-t="title"></h1>
+      <p data-t="sub"></p>
+    </div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Language">
+        <button id="lang-nl" aria-pressed="true">NL</button>
+        <button id="lang-en" aria-pressed="false">EN</button>
+      </div>
+      <button class="btn" id="beamer" aria-pressed="false" data-t="beamer"></button>
+    </div>
+  </header>
+
+  <section class="desk" aria-label="Market">
+    <div class="shockpanel">
+      <span class="eyebrow" data-t="shockEyebrow"></span>
+      <div class="big num" id="shockBig">+0,0%</div>
+      <div class="chips" id="shockChips"></div>
+      <input type="range" id="shock" min="0" max="4" step="0.25" value="0" aria-label="Marktschok">
+      <div class="effrate"><span data-t="effRate"></span> <b class="num" id="effRate"></b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn shock" id="snap" data-t="snap"></button>
+        <button class="btn" id="clearSnap" data-t="clearSnap" hidden></button>
+      </div>
+    </div>
+    <div class="params" id="params"></div>
+  </section>
+
+  <section class="summary" aria-live="polite">
+    <div><span class="eyebrow" data-t="canBuy"></span><div class="score num" id="score"></div></div>
+    <div class="refnote" id="refnote"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <div class="sechead">
+      <div><h2 data-t="clientsH"></h2><span class="eyebrow" data-t="clientsHint"></span></div>
+      <button class="btn" id="resetClients" data-t="reset"></button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="panel">
+    <h2 data-t="cmpH"></h2>
+    <p class="lead" data-t="cmpLead"></p>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i><span data-t="legMax"></span></span>
+      <span><i style="background:var(--price);height:12px;width:3px"></i><span data-t="legPrice"></span></span>
+    </div>
+    <div class="chartbox" id="cmpChart"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <div class="sechead">
+      <div><span class="eyebrow" data-t="detailEyebrow"></span><h2 id="detailName"></h2></div>
+      <div class="selectrow"><label for="detailSel" data-t="choose"></label><select id="detailSel"></select></div>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3 data-t="timeH"></h3>
+        <p class="lead" data-t="timeLead"></p>
+        <div class="legend">
+          <span><i style="background:var(--price)"></i><span data-t="legPriceGrow"></span></span>
+          <span><i style="background:var(--accent)"></i><span data-t="legMaxGrow"></span></span>
+        </div>
+        <div class="chartbox" id="timeChart"></div>
+        <div class="verdict-line" id="timeVerdict"></div>
+      </div>
+      <div class="panel">
+        <h3 data-t="rateH"></h3>
+        <div class="prompt" data-t="predict"></div>
+        <div class="tablewrap"><table id="rateTable"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <footer data-t="foot"></footer>
+</div>
+
+<script>
+const T={
+ nl:{eyebrow:"VOS5 · Verruim je vak · Docentenweergave",title:"De Woningcheck: marktdag",
+  sub:"Vergelijk de klanten van alle groepen in één scherm. Zet een marktschok en zie welk advies omslaat.",
+  beamer:"Beamerweergave",shockEyebrow:"Marktschok: extra rente",effRate:"Effectieve hypotheekrente",
+  snap:"Leg huidige stand vast",clearSnap:"Referentie wissen",canBuy:"Adviezen die nog betaalbaar zijn",
+  refOn:"Vergeleken met de vastgelegde stand ({r} rente).",flipped:"{n} advies(en) omgeslagen",
+  refOff:"Tip: leg de stand vast vóór je de schok zet. Dan zie je per klant wat er verandert.",
+  clientsH:"Advies per groep",clientsHint:"Vul per groep de klant en het geadviseerde woningnummer in · klik op een kaart voor de detailanalyse",
+  reset:"Voorbeelden terugzetten",add:"+ Advies van een groep toevoegen",remove:"Verwijderen",
+  inc:"Groep",own:"Klant",price:"Woningnummer",noHome:"Vul een woning in",unknown:"Onbekend woningnummer",fits:"Past bij alle wensen",gives:"Geeft op: {w}",misses:"Mist: {w}",enterHome:"Typ het woningnummer dat deze groep heeft geadviseerd (bijv. NH-057).",
+  maxMonthly:"Max. maandlast",monthly:"Maandlast woning",maxMortgage:"Max. hypotheek",maxPrice:"Max. koopprijs",room:"Ruimte p/m",
+  ok:"Betaalbaar",no:"Niet betaalbaar",was:"Was: {v}",
+  cmpH:"Maximale koopprijs tegenover vraagprijs",cmpLead:"De balk is wat de klant maximaal kan betalen (hypotheek + eigen geld). Het streepje is de vraagprijs. Valt het streepje buiten de balk, dan past de woning niet.",
+  legMax:"Max. koopprijs",legPrice:"Vraagprijs",detailEyebrow:"Detailanalyse",choose:"Klant",
+  timeH:"Tien jaar vooruit",timeLead:"Huizenprijs groeit exponentieel (vast percentage). Het inkomen stijgt lineair met een vast bedrag per jaar, dat per klant op de kaart staat. De rente blijft gelijk.",incL:"Bruto jaarinkomen",ownL:"Eigen geld",stepL:"Salarisstijging per jaar",
+  legPriceGrow:"Huizenprijs",legMaxGrow:"Max. koopprijs",
+  tvNow:"<b>Nu betaalbaar.</b> {y}",tvKeep:"De klant houdt de markt de komende tien jaar bij.",tvLose:"Vanaf jaar {n} loopt de klant achter op de markt.",
+  tvLater:"<b>Nu niet betaalbaar,</b> maar vanaf jaar {n} wel.",tvNever:"<b>Binnen tien jaar niet betaalbaar.</b> Het gat groeit tot {g} in jaar 10.",
+  year:"Jaar",rateH:"Rentegevoeligheid",predict:"Laat groepen eerst voorspellen: hoeveel daalt de maximale hypotheek als de rente 1 procentpunt stijgt? Toon dan pas de tabel.",
+  rate:"Rente",verdict:"Oordeel",
+  foot:"Vereenvoudigd lesmodel met een vaste woonquote en een annuïteitenhypotheek, gelijk aan het docentenmodel. Het volgt niet de echte leennormen en is geen financieel advies. Alle klantgegevens zijn fictief. Deze tool is bedoeld voor de docent: leerlingen bouwen hun eigen spreadsheet.",
+  p_rate:"Hypotheekrente (basis)",p_rate_h:"Leerlingen zoeken een actuele rente op",
+  p_quote:"Woonquote",p_quote_h:"Deel van bruto inkomen voor woonlasten",
+  p_term:"Looptijd",p_term_h:"Annuïteitenhypotheek",p_pg:"Huizenprijsgroei per jaar",p_pg_h:"Exponentieel toegepast",
+  p_ig:"Inkomensgroei per jaar",p_ig_h:"Lineair: vast bedrag per jaar",yrs:"jaar"},
+ en:{eyebrow:"VOS5 · Broaden your subject · Teacher view",title:"The Housing Check: market day",
+  sub:"Compare every group's client on one screen. Apply a market shock and see whose advice flips.",
+  beamer:"Projector view",shockEyebrow:"Market shock: extra interest",effRate:"Effective mortgage rate",
+  snap:"Lock current state",clearSnap:"Clear reference",canBuy:"Advice that is still affordable",
+  refOn:"Compared with the locked state ({r} interest).",flipped:"{n} verdict(s) flipped",
+  refOff:"Tip: lock the state before applying the shock, so you can see what changes for each client.",
+  clientsH:"Advice per group",clientsHint:"Fill in each group's client and the listing number they advised · click a card for the detailed analysis",
+  reset:"Restore examples",add:"+ Add a group's advice",remove:"Remove",
+  inc:"Group",own:"Client",price:"Listing number",noHome:"Enter a home",unknown:"Unknown listing number",fits:"Meets all wishes",gives:"Gives up: {w}",misses:"Misses: {w}",enterHome:"Type the listing number this group advised (e.g. NH-057).",
+  maxMonthly:"Max. monthly payment",monthly:"Monthly cost of home",maxMortgage:"Max. mortgage",maxPrice:"Max. purchase price",room:"Margin p/m",
+  ok:"Affordable",no:"Not affordable",was:"Was: {v}",
+  cmpH:"Maximum purchase price versus asking price",cmpLead:"The bar is what the client can pay at most (mortgage + own funds). The tick is the asking price. If the tick sits beyond the bar, the home does not fit.",
+  legMax:"Max. purchase price",legPrice:"Asking price",detailEyebrow:"Detailed analysis",choose:"Client",
+  timeH:"Ten years ahead",timeLead:"House prices grow exponentially (fixed percentage). Income rises linearly by a fixed amount per year, shown on each client's card. The interest rate stays the same.",incL:"Gross income per year",ownL:"Own funds",stepL:"Salary increase per year",
+  legPriceGrow:"House price",legMaxGrow:"Max. purchase price",
+  tvNow:"<b>Affordable now.</b> {y}",tvKeep:"The client keeps up with the market for the next ten years.",tvLose:"From year {n} the client falls behind the market.",
+  tvLater:"<b>Not affordable now,</b> but it is from year {n}.",tvNever:"<b>Not affordable within ten years.</b> The gap grows to {g} by year 10.",
+  year:"Year",rateH:"Interest sensitivity",predict:"Have groups predict first: how much does the maximum mortgage drop if the rate rises by 1 percentage point? Then reveal the table.",
+  rate:"Rate",verdict:"Verdict",
+  foot:"Simplified teaching model with a fixed housing-cost ratio and an annuity mortgage, matching the teacher model. It does not follow real lending standards and is not financial advice. All client data is fictional. This tool is for the teacher: students build their own spreadsheet.",
+  p_rate:"Mortgage rate (base)",p_rate_h:"Students look up a current rate",
+  p_quote:"Housing-cost ratio",p_quote_h:"Share of gross income for housing",
+  p_term:"Term",p_term_h:"Annuity mortgage",p_pg:"House price growth per year",p_pg_h:"Applied exponentially",
+  p_ig:"Income growth per year",p_ig_h:"Linear: fixed amount per year",yrs:"years"}
+};
+const EXAMPLES=[
+ {group:"Group A",client:"silva",listing:"NH-057"},
+ {group:"Group B",client:"silva",listing:"NH-073"},
+ {group:"Group C",client:"silva",listing:"NH-077"},
+ {group:"Group D",client:"tanaka",listing:"NH-020"},
+ {group:"Group E",client:"mensah",listing:"NH-054"},
+ {group:"Group F",client:"hughes",listing:"NH-207"},
+ {group:"Group G",client:"kowalski",listing:"NH-136"},
+ {group:"Group H",client:"haddad",listing:"NH-180"},
+ {group:"Group I",client:"park",listing:"NH-026"},
+ {group:"Group J",client:"tremblay",listing:"NH-086"}
+];
+const HCD=window.HC_DATA||{clients:[],homes:{}};
+const INCOME={silva:[95000,40000,2375],tanaka:[72000,60000,1800],mensah:[110000,25000,2750],hughes:[48000,90000,1200],kowalski:[78000,30000,1950],haddad:[65000,15000,1625],park:[140000,80000,3500],tremblay:[58000,35000,1450]};
+function normId(s){const m=String(s||"").match(/(\d{1,3})/);return m?"NH-"+String(+m[1]).padStart(3,"0"):""}
+function wishOk(h,w){const x=h[w.f];return w.op==="in"?w.v.includes(x):w.op==="notin"?!w.v.includes(x):w.op===">="?x>=w.v:x<=w.v}
+function hydrate(e){
+  const cl=HCD.clients.find(x=>x.id===e.client)||HCD.clients[0];
+  if(cl)e.client=cl.id;
+  const iv=INCOME[e.client]||[50000,10000,1250];e.inc=iv[0];e.own=iv[1];e.step=iv[2];
+  e.listing=normId(e.listing);const h=HCD.homes[e.listing];
+  e.valid=!!h;e.price=h?h.price:0;e.unknown=!!e.listing&&!h;
+  e.name=(e.group||"?")+" · "+(cl?cl.short:"");
+  e.fit="";e.fitText="";e.nl="";e.en="";
+  if(h&&cl){
+    const miss=cl.wishes.filter(w=>!wishOk(h,w));
+    const typ=h.type==="Apartment"?"apartment":h.type.toLowerCase();
+    e.nl=e.en=`${h.city} (${h.area}), ${typ}, ${h.m2} m², ${h.bedrooms} bd, label ${h.label}`;
+    e.fit=!miss.length?"fits":miss.every(w=>w.imp==="flexible")?"gives":"misses";
+    const DN={location:"location",type:"type of home",outdoor:"outdoor space",station:"distance to station",bedrooms:"bedrooms"};
+    e.fitText=miss.map(w=>DN[w.dim]||w.dim).join(", ");
+  }
+  return e;
+}
+
+const S={lang:"nl",beamer:false,rate:.04,shock:0,quote:.25,term:30,pg:.04,ig:.025,
+  clients:EXAMPLES.map(c=>hydrate({...c})),sel:0,ref:null};
+const KEY="woningcheck-marktdag-v6";
+try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d){Object.assign(S,d);S.ref=null;S.clients=(S.clients||[]).map(hydrate)}}catch(e){}
+function save(){try{const {ref,...rest}=S;localStorage.setItem(KEY,JSON.stringify(rest))}catch(e){}}
+
+const t=(k,v={})=>(T[S.lang][k]||k).replace(/\{(\w+)\}/g,(_,x)=>v[x]);
+const loc=()=>S.lang==="nl"?"nl-NL":"en-GB";
+const eur=x=>new Intl.NumberFormat(loc(),{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(x);
+const eurK=x=>new Intl.NumberFormat(loc(),{style:"currency",currency:"EUR",notation:"compact",maximumFractionDigits:0}).format(x);
+const pct=(x,d=1)=>new Intl.NumberFormat(loc(),{style:"percent",minimumFractionDigits:d,maximumFractionDigits:d}).format(x);
+const sgn=(x,f)=>(x>0?"+":x<0?"−":"±")+f(Math.abs(x));
+
+/* Model: identical to the teacher spreadsheet */
+function annuity(rate,term){const i=rate/12,n=term*12;return i===0?n:(1-Math.pow(1+i,-n))/i}
+function calc(c,rate){
+  const eff=rate??(S.rate+S.shock), f=annuity(eff,S.term);
+  const maxMonthly=c.inc/12*S.quote, maxMortgage=maxMonthly*f, loan=Math.max(0,c.price-c.own);
+  const monthly=loan/f, maxPrice=maxMortgage+c.own;
+  return {eff,maxMonthly,maxMortgage,loan,monthly,maxPrice,room:maxMonthly-monthly,ok:c.valid===false?null:monthly<=maxMonthly+1e-9};
+}
+function timeline(c){
+  const f=annuity(S.rate+S.shock,S.term),rows=[];
+  for(let y=0;y<=10;y++){const price=c.price*Math.pow(1+S.pg,y),inc=c.inc+(c.step||0)*y;
+    const maxP=inc/12*S.quote*f+c.own;rows.push({y,price,inc,maxP,diff:maxP-price,ok:maxP>=price})}
+  return rows;
+}
+
+/* Static text */
+function applyText(){
+  document.documentElement.lang=S.lang;
+  document.querySelectorAll("[data-t]").forEach(el=>el.textContent=t(el.dataset.t));
+  document.getElementById("lang-nl").setAttribute("aria-pressed",S.lang==="nl");
+  document.getElementById("lang-en").setAttribute("aria-pressed",S.lang==="en");
+}
+
+/* Parameters */
+const PARAMS=[
+ {k:"rate",l:"p_rate",h:"p_rate_h",min:0,max:.08,step:.0025,fmt:x=>pct(x,2)},
+ {k:"quote",l:"p_quote",h:"p_quote_h",min:.15,max:.4,step:.01,fmt:x=>pct(x,0)},
+ {k:"term",l:"p_term",h:"p_term_h",min:10,max:30,step:5,fmt:x=>x+" "+t("yrs")},
+ {k:"pg",l:"p_pg",h:"p_pg_h",min:-.04,max:.1,step:.005,fmt:x=>pct(x,1)}
+];
+function buildParams(){
+  const box=document.getElementById("params");box.innerHTML="";
+  PARAMS.forEach(p=>{const d=document.createElement("div");d.className="param";
+    d.innerHTML=`<label for="p-${p.k}"><span>${t(p.l)}</span><span class="num" id="v-${p.k}"></span></label>
+    <input type="range" id="p-${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${S[p.k]}"><small>${t(p.h)}</small>`;
+    box.appendChild(d);
+    d.querySelector("input").addEventListener("input",e=>{S[p.k]=+e.target.value;render()});
+  });
+}
+const SHOCKS=[0,.005,.01,.015,.02];
+function buildChips(){
+  const box=document.getElementById("shockChips");box.innerHTML="";
+  SHOCKS.forEach(v=>{const b=document.createElement("button");b.className="chip";b.textContent="+"+pct(v,1);
+    b.dataset.v=v;b.onclick=()=>{S.shock=v;document.getElementById("shock").value=v*100;render()};box.appendChild(b)});
+}
+
+/* Render */
+let prevOk=null;
+function render(){
+  PARAMS.forEach(p=>{document.getElementById("v-"+p.k).textContent=p.fmt(S[p.k])});
+  document.getElementById("shockBig").textContent="+"+pct(S.shock,1);
+  document.querySelectorAll("#shockChips .chip").forEach(b=>b.setAttribute("aria-pressed",Math.abs(+b.dataset.v-S.shock)<1e-9));
+  document.getElementById("effRate").textContent=pct(S.rate+S.shock,2);
+  const res=S.clients.map(c=>calc(c));
+  const nOk=res.filter(r=>r.ok===true).length, nValid=res.filter(r=>r.ok!==null).length;
+  document.getElementById("score").textContent=`${nOk} / ${nValid}`;
+  const rn=document.getElementById("refnote");
+  if(S.ref){const flips=S.clients.filter((c,i)=>S.ref[i]&&S.ref[i].ok!==null&&res[i].ok!==null&&S.ref[i].ok!==res[i].ok).length;
+    rn.innerHTML=`<span>${t("refOn",{r:"<b>"+pct((S.ref.find(x=>x)||{}).eff,2)+"</b>"})}</span><b style="color:var(--shock)">${t("flipped",{n:flips})}</b>`;
+  }else rn.textContent=t("refOff");
+  document.getElementById("clearSnap").hidden=!S.ref;
+  renderGrid(res);renderCmp(res);renderDetail();
+  prevOk=res.map(r=>r.ok);save();
+}
+
+function renderGrid(res){
+  const g=document.getElementById("grid");
+  const focusId=document.activeElement&&document.activeElement.id;
+  g.innerHTML="";
+  S.clients.forEach((c,i)=>{const r=res[i],ref=S.ref&&S.ref[i];
+    const el=document.createElement("article");el.className="card"+(i===S.sel?" sel":"");
+    if(prevOk&&prevOk[i]!==undefined&&prevOk[i]!==r.ok)el.classList.add("flip");
+    const share=Math.min(1,r.maxPrice/Math.max(c.price,r.maxPrice));
+    const d=ref?r.maxPrice-ref.maxPrice:0;
+    el.innerHTML=`
+    <div class="chead"><div class="who">
+      <span class="name" style="font-family:var(--f-display);font-weight:700;font-size:1.05rem">${esc(c.name)}</span>
+      <span class="desc">${c.valid?esc(c.listing+" · "+c[S.lang]):esc(c.unknown?t("unknown"):t("enterHome"))}</span>
+      ${c.valid?`<span class="desc" style="color:${c.fit==="misses"?"var(--bad)":"var(--muted)"};font-weight:600">${c.fit==="fits"?t("fits"):t(c.fit,{w:c.fitText})}</span>`:""}</div>
+      ${r.ok===null?`<span class="pill" style="background:var(--sunk);color:var(--muted)">${t("noHome")}</span>`:`<span class="pill ${r.ok?"ok":"no"}">${r.ok?t("ok"):t("no")}</span>`}</div>
+    ${ref&&ref.ok!==r.ok?`<div class="was">${t("was",{v:ref.ok?t("ok"):t("no")})}</div>`:""}
+    <div class="inputs">
+      <label>${t("inc")}<input id="g-${i}" value="${esc(c.group||"")}"></label>
+      <label>${t("own")}<select id="c-${i}" style="width:100%;min-width:0;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 4px;font-size:.82rem">${HCD.clients.map((x,j)=>`<option value="${x.id}"${x.id===c.client?" selected":""}>${j+1}. ${esc(x.short)}</option>`).join("")}</select></label>
+      <label>${t("price")}<input id="l-${i}" value="${esc(c.listing||"")}" placeholder="NH-…" autocomplete="off"></label>
+    </div>
+    <div class="gap" title="${t("maxPrice")} / ${t("price")}"><span style="width:${(share*100).toFixed(1)}%;background:${r.ok?"var(--good)":"var(--bad)"}"></span></div>
+    <dl class="results" style="border-bottom:1px dashed var(--line);padding-bottom:10px">
+      <dt>${t("incL")}</dt><dd class="num">${eur(c.inc)}</dd>
+      <dt>${t("ownL")}</dt><dd class="num">${eur(c.own)}</dd>
+      <dt>${t("stepL")}</dt><dd class="num">+${eur(c.step||0)}</dd>
+    </dl>
+    <dl class="results" style="border-top:0;padding-top:8px">
+      <dt>${t("maxMonthly")}</dt><dd class="num">${eur(r.maxMonthly)}</dd>
+      <dt>${t("monthly")}</dt><dd class="num">${eur(r.monthly)}</dd>
+      <dt>${t("maxMortgage")}</dt><dd class="num">${eur(r.maxMortgage)}</dd>
+      <div class="key" style="display:contents"><dt>${t("maxPrice")}</dt><dd class="num">${eur(r.maxPrice)}${ref&&Math.abs(d)>.5?`<span class="delta ${d>0?"up":"down"}">${sgn(d,eurK)}</span>`:""}</dd></div>
+      <div class="key" style="display:contents"><dt>${t("room")}</dt><dd class="num" style="color:${r.room>=0?"var(--good)":"var(--bad)"}">${sgn(r.room,eur)}</dd></div>
+    </dl>
+    <div class="cfoot"><button class="del" data-del="${i}">${t("remove")}</button></div>`;
+    el.addEventListener("click",e=>{if(e.target.closest("input,button,select,label,option"))return;if(S.sel===i)return;S.sel=i;render()});
+    g.appendChild(el);
+    const bind=(id,key,num)=>{const inp=el.querySelector("#"+id);
+      inp.addEventListener("change",()=>{const v=num?parseFloat(inp.value.replace(/[^\d.,-]/g,"").replace(/\./g,"").replace(",",".")):inp.value;
+        if(num&&!isFinite(v)){inp.value=c[key];return}c[key]=v;render()})};
+    const upd=(id,key)=>{const inp=el.querySelector("#"+id);inp.addEventListener("change",()=>{c[key]=inp.value.trim();hydrate(c);prevOk=null;render()})};
+    upd("g-"+i,"group");upd("c-"+i,"client");upd("l-"+i,"listing");
+    el.querySelector("[data-del]").onclick=()=>{S.clients.splice(i,1);if(S.ref)S.ref.splice(i,1);prevOk=null;S.sel=Math.min(S.sel,S.clients.length-1);render()};
+  });
+  const add=document.createElement("button");add.className="addcard";add.textContent=t("add");
+  add.onclick=()=>{S.clients.push(hydrate({group:(S.lang==="nl"?"Groep ":"Group ")+(S.clients.length+1),client:(HCD.clients[0]||{}).id,listing:""}));
+    if(S.ref)S.ref.push(null);S.sel=S.clients.length-1;prevOk=null;render()};
+  g.appendChild(add);
+  if(focusId){const f=document.getElementById(focusId);if(f)f.focus()}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+
+function niceMax(v){const p=Math.pow(10,Math.floor(Math.log10(v)));for(const m of[1,1.5,2,2.5,3,4,5,6,8,10])if(m*p>=v)return m*p;return 10*p}
+
+function renderCmp(res){
+  const box=document.getElementById("cmpChart");
+  const L=S.clients.map((c,i)=>({c,r:res[i],i})).filter(x=>x.c.valid);
+  if(!L.length){box.innerHTML="";return}
+  const W=Math.max(560,box.clientWidth||800),LW=200,R=24,rowH=34,top=8,H=top+L.length*rowH+26;
+  const mx=niceMax(Math.max(...L.map(x=>Math.max(x.c.price,x.r.maxPrice)))*1.02);
+  const x=v=>LW+(W-LW-R)*v/mx;let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${t("cmpH")}">`;
+  for(let k=0;k<=4;k++){const v=mx*k/4,xx=x(v);s+=`<line x1="${xx}" x2="${xx}" y1="${top}" y2="${H-22}" stroke="var(--line)"/><text x="${xx}" y="${H-6}" text-anchor="middle">${eurK(v)}</text>`}
+  L.forEach(({c,r,i},k)=>{const y=top+k*rowH;
+    s+=`<text class="lbl" x="${LW-10}" y="${y+rowH/2+4}" text-anchor="end">${esc(c.name)}</text>`;
+    s+=`<rect x="${LW}" y="${y+8}" width="${Math.max(0,x(r.maxPrice)-LW)}" height="${rowH-16}" rx="4" fill="var(--accent)" opacity="${i===S.sel?1:.75}"/>`;
+    const px=x(c.price);s+=`<rect x="${px-1.5}" y="${y+3}" width="3" height="${rowH-6}" rx="1.5" fill="var(--price)"/>`;
+    s+=`<text x="${Math.min(px,x(r.maxPrice))-6}" y="${y+rowH/2+4}" text-anchor="end" style="fill:var(--accent-ink);font-weight:600">${(x(r.maxPrice)-LW>90&&px>LW+90)?eurK(r.maxPrice):""}</text>`;
+  });
+  box.innerHTML=s+"</svg>";
+}
+
+function renderDetail(){
+  const sel=document.getElementById("detailSel");
+  sel.innerHTML=S.clients.map((c,i)=>`<option value="${i}"${i===S.sel?" selected":""}>${esc(c.name)}</option>`).join("");
+  const c=S.clients[S.sel];
+  if(!c||!c.valid){document.getElementById("detailName").textContent=c?c.name+" · "+t("noHome"):"";document.getElementById("timeChart").innerHTML="";document.getElementById("rateTable").innerHTML="";document.getElementById("timeVerdict").innerHTML="";return}
+  document.getElementById("detailName").textContent=c.name+(c[S.lang]?" · "+c[S.lang]:"");
+  const rows=timeline(c);
+  // time chart
+  const box=document.getElementById("timeChart");
+  const W=Math.max(520,box.clientWidth||640),H=260,L=64,R=16,Tp=12,B=30;
+  const vals=rows.flatMap(r=>[r.price,r.maxP]);let lo=Math.min(...vals),hi=Math.max(...vals);
+  const pad=(hi-lo)*.1||hi*.1;lo=Math.max(0,lo-pad);hi=hi+pad;
+  const x=y=>L+(W-L-R)*y/10,y=v=>Tp+(H-Tp-B)*(1-(v-lo)/(hi-lo));
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${t("timeH")}">`;
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,yy=y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-8}" y="${yy+4}" text-anchor="end">${eurK(v)}</text>`}
+  rows.forEach(r=>{s+=`<text x="${x(r.y)}" y="${H-10}" text-anchor="middle">${r.y}</text>`});
+  // gap area
+  const pts=a=>rows.map(r=>`${x(r.y).toFixed(1)},${y(r[a]).toFixed(1)}`).join(" ");
+  const area=rows.map(r=>`${x(r.y)},${y(r.price)}`).concat(rows.slice().reverse().map(r=>`${x(r.y)},${y(r.maxP)}`)).join(" ");
+  s+=`<polygon points="${area}" fill="var(--bad)" opacity=".1"/>`;
+  s+=`<polyline points="${pts("price")}" fill="none" stroke="var(--price)" stroke-width="2.5"/>`;
+  s+=`<polyline points="${pts("maxP")}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+  rows.forEach(r=>{s+=`<circle cx="${x(r.y)}" cy="${y(r.price)}" r="3" fill="var(--price)"/><circle cx="${x(r.y)}" cy="${y(r.maxP)}" r="3" fill="${r.ok?"var(--good)":"var(--accent)"}"/>`});
+  const last=rows[10];s+=`<text x="${x(10)-4}" y="${y(last.price)-8}" text-anchor="end" style="fill:var(--price);font-weight:600">${eurK(last.price)}</text>`;
+  s+=`<text x="${x(10)-4}" y="${y(last.maxP)+16}" text-anchor="end" style="fill:var(--accent);font-weight:600">${eurK(last.maxP)}</text>`;
+  s+=`<text x="${W-R}" y="${Tp+4}" text-anchor="end">${t("year")} →</text>`;
+  box.innerHTML=s+"</svg>";
+  // verdict
+  let v;
+  if(rows[0].ok){const lose=rows.find(r=>!r.ok);v=t("tvNow",{y:lose?t("tvLose",{n:lose.y}):t("tvKeep")})}
+  else{const gain=rows.find(r=>r.ok);v=gain?t("tvLater",{n:gain.y}):t("tvNever",{g:eur(-last.diff)})}
+  document.getElementById("timeVerdict").innerHTML=v;
+  // rate table
+  const eff=S.rate+S.shock,rates=[];for(let r=.02;r<=.0701;r+=.005)rates.push(+r.toFixed(4));
+  const near=rates.reduce((a,b)=>Math.abs(b-eff)<Math.abs(a-eff)?b:a);
+  let h=`<thead><tr><th>${t("rate")}</th><th>${t("maxMortgage")}</th><th>${t("monthly")}</th><th>${t("verdict")}</th></tr></thead><tbody>`;
+  rates.forEach(r=>{const k=calc(c,r);h+=`<tr class="${r===near?"cur":""}"><td class="num">${pct(r,1)}</td><td class="num">${eur(k.maxMortgage)}</td><td class="num">${eur(k.monthly)}</td><td class="${k.ok?"ok":"no"}">${k.ok?t("ok"):t("no")}</td></tr>`});
+  document.getElementById("rateTable").innerHTML=h+"</tbody>";
+}
+
+/* Events */
+document.getElementById("lang-nl").onclick=()=>{S.lang="nl";init()};
+document.getElementById("lang-en").onclick=()=>{S.lang="en";init()};
+document.getElementById("beamer").onclick=e=>{S.beamer=!S.beamer;document.documentElement.classList.toggle("beamer",S.beamer);e.currentTarget.setAttribute("aria-pressed",S.beamer);render()};
+document.getElementById("shock").addEventListener("input",e=>{S.shock=+e.target.value/100;render()});
+document.getElementById("snap").onclick=()=>{S.ref=S.clients.map(c=>calc(c));render()};
+document.getElementById("clearSnap").onclick=()=>{S.ref=null;render()};
+document.getElementById("resetClients").onclick=()=>{S.clients=EXAMPLES.map(c=>hydrate({...c}));S.ref=null;S.sel=0;prevOk=null;render()};
+document.getElementById("detailSel").onchange=e=>{S.sel=+e.target.value;render()};
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{renderCmp(S.clients.map(c=>calc(c)));renderDetail()},150)});
+
+function init(){document.getElementById("shock").min=0;document.getElementById("shock").max=4;document.getElementById("shock").step=.25;
+  document.getElementById("shock").value=S.shock*100;document.documentElement.classList.toggle("beamer",S.beamer);
+  document.getElementById("beamer").setAttribute("aria-pressed",S.beamer);
+  applyText();buildParams();buildChips();prevOk=null;render()}
+init();
+</script>
+
+</body>
+</html>

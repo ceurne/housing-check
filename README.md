@@ -2,12 +2,16 @@
 
 Web tools for **The Housing Check**, a VOS5 interdisciplinary project (economics, mathematics, English and computational thinking) in which havo 4/5 students advise international newcomers on buying a home in Noord-Holland.
 
-## Pages
+## The site
 
-| Page | For | What it does |
+Everything is in **one self-contained file**, `index.html`, with two tabs:
+
+| Tab | For | What it does |
 |---|---|---|
-| `index.html` | Students | **Client Inbox.** Students enter their name or group, choose their client from a menu, and e-mail one of eight fictional clients in English and get a reply in character. Clients answer questions about their wishes, money, plans and situation, and react positively or negatively when a student proposes a home by its listing number (NH-001 to NH-240). |
-| `marktdag.html` | Teacher | **Market day dashboard.** Shows all clients side by side and lets the teacher apply an interest-rate shock to see whose advice flips. |
+| Client Inbox | Students | Students enter their name or group, choose their client from a menu, and e-mail one of eight fictional clients in English. Clients answer questions about their wishes, money, plans and situation, and react positively or negatively when a student proposes a home by its listing number (NH-001 to NH-240). |
+| Market day | Teacher | Shows each group's advice side by side and lets the teacher apply an interest-rate shock to see whose advice flips. Open it directly with `#teacher` at the end of the link. |
+
+Use **Download as one file** at the top of the site to save `The_Housing_Check.html`. It works offline: open it by double-clicking. (`marktdag.html` only redirects to the Market day tab.)
 
 ## How the Client Inbox works
 
@@ -19,8 +23,9 @@ Note: the client data is readable in `data.js`. Students who open the source cod
 
 ## Updating
 
-- Client answers and wishes: edit `src/clients_data.py`, then run `cd src && python3 build_data.py` (this rewrites `data.js`).
+- Client answers and wishes: edit `src/clients_data.py`, then run `cd src && python3 build_data.py` (rewrites `data.js`).
+- Matching rules: `engine.js`. Inbox page: `src/inbox.html`. Dashboard page: `src/marktdag.html`.
+- After any change, rebuild the single file: `python3 src/build_site.py` (rewrites `index.html`).
 - Test questions: `node src/tests/run.js src/tests/questions_students.json`.
-- Matching rules: `engine.js`.
 
 All clients, homes and figures are fictional. This is a simplified teaching model and not financial advice.
