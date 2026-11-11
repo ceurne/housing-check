@@ -21,10 +21,20 @@ The clients' priorities match the answer key in the Teacher Guide. Every client 
 
 Note: the client data is readable in `data.js`. Students who open the source code can see the answers, so tell them the inbox is a tool for practising, not a puzzle.
 
+## Formal English check
+
+Every e-mail a student sends is checked offline for tone (greeting, closing, text speak, emojis, capitals, demanding phrases), spelling (a list of about 61,000 English words with British spellings, `src/words_en.txt`) and common phrasing mistakes by Dutch learners (`language.js`). The client reacts:
+
+- **Formal and correct:** a normal answer.
+- **Small issues:** an answer with a P.S. about the tone or the mistakes.
+- **Clearly informal or many mistakes:** no answer; the client says they do not feel taken seriously and asks for a professional e-mail. This escalates on the second and third time. A good e-mail after a complaint is thanked.
+
+A **Writing coach** box under each student e-mail lists what to improve. "Copy conversation" includes these notes, so teachers can use them as evidence.
+
 ## Updating
 
 - Client answers and wishes: edit `src/clients_data.py`, then run `cd src && python3 build_data.py` (rewrites `data.js`).
-- Matching rules: `engine.js`. Inbox page: `src/inbox.html`. Dashboard page: `src/marktdag.html`.
+- Matching rules: `engine.js`. Language check: `language.js`. Word list: `src/words_en.txt` (rebuild `words.js` from it with the one-liner in `src/build_site.py` comments, or rerun `src/build_words.py`). Inbox page: `src/inbox.html`. Dashboard page: `src/marktdag.html`.
 - After any change, rebuild the single file: `python3 src/build_site.py` (rewrites `index.html`).
 - Test questions: `node src/tests/run.js src/tests/questions_students.json`.
 

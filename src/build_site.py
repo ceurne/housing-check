@@ -1,7 +1,9 @@
 """Build index.html: one self-contained file with the Client Inbox and the Market day dashboard.
 
 Run from the repository root:  python3 src/build_site.py
-Sources: src/inbox.html, src/marktdag.html, data.js, engine.js
+Sources: src/inbox.html, src/marktdag.html, data.js, words.js, language.js, engine.js
+words.js is made from src/words_en.txt:
+  python3 -c "import json;open('words.js','w').write('window.HC_WORDS = '+json.dumps(open('src/words_en.txt').read())+';\\n')"
 """
 import html, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -9,9 +11,11 @@ rd = lambda p: open(os.path.join(ROOT, p), encoding="utf-8").read()
 
 data = rd("data.js").replace("</", "<\\/")
 engine = rd("engine.js").replace("</script", "<\\/script")
-share = '<script>window.HC_DATA = parent.HC_DATA; window.HousingCheckEngine = parent.HousingCheckEngine;</script>'
+words = rd("words.js").replace("</", "<\\/")
+language = rd("language.js").replace("</script", "<\\/script")
+share = '<script>window.HC_DATA = parent.HC_DATA; window.HC_WORDS = parent.HC_WORDS; window.HousingCheckLanguage = parent.HousingCheckLanguage; window.HousingCheckEngine = parent.HousingCheckEngine;</script>'
 
-inbox = rd("src/inbox.html").replace('<script src="data.js"></script>\n<script src="engine.js"></script>', share)
+inbox = rd("src/inbox.html").replace('<script src="data.js"></script>\n<script src="words.js"></script>\n<script src="language.js"></script>\n<script src="engine.js"></script>', share)
 dash = rd("src/marktdag.html").replace('<script src="data.js"></script>', share)
 assert share in inbox and share in dash
 
@@ -44,6 +48,8 @@ iframe{{flex:1;width:100%;border:0;display:block;background:var(--bg)}}
 @media (max-width:520px){{.brand{{width:100%}}}}
 </style>
 <script>{data}</script>
+<script>{words}</script>
+<script>{language}</script>
 <script>{engine}</script>
 </head>
 <body>

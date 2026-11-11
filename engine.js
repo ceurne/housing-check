@@ -7,7 +7,7 @@
   const I = {
     listingTold: null, // handled separately
     toldMax: /(you|your)\b[^.?!]{0,60}\b(can|could|may|are able to)\s+(borrow|spend|afford|pay)\b[^.?!]{0,40}(€|eur|euro|\d{3})|\b(maximum|max\.?)\s+(mortgage|price|purchase price|loan|budget)\s+(is|of|will be)\s+[^.?!]{0,10}(€|\d)|\bbudget\s+(is|of)\s+(about\s+)?(€|\d)/i,
-    afford: /\b(afford|borrow|how much (money )?(can|could|may) (you|we|i) (get|spend|pay for)|max(imum)?\.? (mortgage|price|purchase|loan|budget)|mortgage (amount|size)|how big .*mortgage|your budget|what budget|price range)/i,
+    afford: /\b(afford|borrow|how much (money )?(can|could|may) (you|we|i) (get|spend|pay for|lend|borrow)|max(imum)?\.? (mortgage|price|purchase|loan|budget)|mortgage (amount|size)|how big .*mortgage|your budget|what budget|price range)/i,
     wait: /\b(wait|waiting|later|next year|buy now|right now|now or|in a few (months|years)|lower rates?|rates? (go|will go|might go|to go) down|go down)\b/i,
     rentvsbuy: /\b(rent(ing)? (first|instead|or)|instead of buying|buy or rent|rent or buy|keep renting|should .{0,20}rent|better to rent)\b/i,
     interest: /\b(interest|rate|rates)\b/i,
@@ -208,7 +208,28 @@
     return null;
   }
 
-  function reply(c, text, homes, advisor) {
+  const ALLOW = {};
+  function allowFor(c, homes, advisor) {
+    const key = c.id + "|" + (advisor || "");
+    if (ALLOW[key]) return ALLOW[key];
+    const s = new Set();
+    const addWords = str => String(str || "").toLowerCase().split(/[^a-zà-ÿ'-]+/).forEach(w => w && s.add(w));
+    [c.name, c.short, c.sign, c.from, advisor, "Biscoito Pip Marmalade Joana Kwame Lena Marta Ji-woo Daniel Mateus Aiko Olivia Tomasz Amira Sophie Silva Tanaka Mensah Becker Hughes Kowalski Haddad Park Reyes Tremblay Kerkelanden Overwhere Weidevenne Schalkwijk Julianadorp Huiswaard Oudorp Krommenie IJmuiden NHG BKR Nibud Funda Kadaster"].forEach(addWords);
+    Object.values(homes || {}).forEach(h => { addWords(h.city); addWords(h.area); addWords(h.street); });
+    CITY_NAMES.forEach(addWords);
+    return (ALLOW[key] = s);
+  }
+  function languageReply(c, L, ctx) {
+    const n = (ctx && ctx.complaints) || 0;
+    const what = L.reason === "language"
+      ? "I am sorry, but I find your e-mail quite difficult to understand. There are a lot of mistakes in it, and that worries {us} a little."
+      : "To be honest, your e-mail feels very casual.";
+    if (n === 0) return fill(what + " {We} are about to make the biggest financial decision of {our} life, and {we} would like to feel that you take {us} seriously. Could you please write to {us} again in a clear and professional way? Then {we} will gladly answer your questions.", c);
+    if (n === 1) return fill(what + " This is the second time {we} have to ask you this, and {we} do not feel taken seriously. Please send {us} a professional e-mail. If the next one is not better, {we} will ask for another advisor.", c);
+    return fill("{We} are disappointed. {We} have asked three times for a professional e-mail. {We} have contacted your manager to ask for another advisor. If you want to keep working with {us}, please send a clear, polite and correct e-mail.", c);
+  }
+
+  function reply(c, text, homes, advisor, ctx) {
     const P = pron(c);
     const greet = "Dear " + (advisor || "advisor") + ",";
     const close = "\n\nKind regards,\n" + c.sign;
@@ -216,6 +237,14 @@
     const t = text.trim();
     if (looksDutch(t)) return wrap(fill(c.common.dutch, c));
     if (RUDE.test(t)) return wrap(fill(c.common.rude, c));
+    const LANG = root.HousingCheckLanguage && root.HC_WORDS ? root.HousingCheckLanguage.check(t, { allow: allowFor(c, homes, advisor) }) : { level: 0 };
+    if (LANG.level === 2) return wrap(languageReply(c, LANG, ctx));
+    const opener = ctx && ctx.complaints > 0 && LANG.level === 0 ? fill("Thank you for your clear and professional e-mail. ", c) : "";
+    const remark = LANG.level === 1
+      ? fill(LANG.reason === "language"
+        ? "P.S. Some parts of your e-mail were a little hard for {us} to understand, but I think I know what you mean."
+        : "P.S. Your e-mail felt a little informal. {We} are about to make a big decision, so {we} appreciate a professional tone.", c)
+      : "";
 
     const body = stripFrame(t);
     const parts = [];
@@ -312,12 +341,13 @@
     // keep it readable: at most 5 paragraphs
     if (picked.length > 6) picked = picked.slice(0, 6).concat([`${P.We} will answer your other questions in ${P.our} next e-mail.`]);
     if (!picked.length) {
-      if (/\b(thank|thanks)\b/i.test(t) && !/\?/.test(t)) return wrap(fill(c.common.thanks, c));
-      if (!/\?/.test(t) && t.length < 400) return wrap(fill(c.common.greetingOnly, c));
-      return wrap(fill(c.common.unclear, c));
+      const tail = remark ? "\n\n" + remark : "";
+      if (/\b(thank|thanks)\b/i.test(t) && !/\?/.test(t)) return wrap(opener + fill(c.common.thanks, c) + tail);
+      if (!/\?/.test(t) && t.length < 400) return wrap(opener + fill(c.common.greetingOnly, c) + tail);
+      return wrap(opener + fill(c.common.unclear, c) + tail);
     }
-    return wrap("Thank you for your e-mail.\n\n" + picked.join("\n\n")).replace(/\bI are\b/g, "I am");
+    return wrap((opener || "Thank you for your e-mail. ").trim() + "\n\n" + picked.join("\n\n") + (remark ? "\n\n" + remark : "")).replace(/\bI are\b/g, "I am");
   }
 
-  root.HousingCheckEngine = { reply, listingsIn, citiesIn };
+  root.HousingCheckEngine = { reply, listingsIn, citiesIn, allowFor };
 })(typeof window !== "undefined" ? window : globalThis);

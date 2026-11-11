@@ -77,6 +77,12 @@ header p{margin:4px 0 0;color:var(--muted);max-width:64ch}
 .hint{font-size:.78rem;color:var(--muted);max-width:60ch}
 .note{font-size:.8rem;color:var(--warn)}
 footer{color:var(--muted);font-size:.78rem;max-width:90ch}
+.coach{align-self:flex-end;max-width:680px;width:100%;border:1px dashed var(--line);border-radius:var(--r);padding:10px 14px;font-size:.84rem;background:var(--bg)}
+.coach b.h{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.coach.ok b.h{color:var(--accent)} .coach.l1 b.h{color:var(--warn)} .coach.l2 b.h{color:#B23A35}
+.coach ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.coach .fix{color:var(--muted)}
+
 .start{display:flex;flex-direction:column;gap:18px}
 .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
 .step h2 .n{font-family:var(--f-mono);font-size:.8rem;color:var(--accent);margin-right:8px;vertical-align:2px}
@@ -96,6 +102,8 @@ footer{color:var(--muted);font-size:.78rem;max-width:90ch}
 </style>
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}footer a{color:var(--accent)}</style>
 <script src="data.js"></script>
+<script src="words.js"></script>
+<script src="language.js"></script>
 <script src="engine.js"></script>
 </head>
 <body>
@@ -141,7 +149,7 @@ footer{color:var(--muted);font-size:.78rem;max-width:90ch}
           <label for="text" class="eyebrow">Your reply</label>
           <textarea id="text" placeholder="Dear …,&#10;&#10;Thank you for your e-mail. I have a question about …"></textarea>
           <div class="crow">
-            <span class="hint">Write in English. Ask one or two clear questions per e-mail. Mention a listing number (for example NH-057) to ask what your client thinks of a home. Your client does not know how much they can borrow; that is your job.</span>
+            <span class="hint">Write a formal e-mail in English: start with “Dear …,”, end with “Kind regards,” and your name, and check your spelling. Your client expects a professional advisor. Ask one or two clear questions per e-mail. Mention a listing number (for example NH-057) to ask what your client thinks of a home. Your client does not know how much they can borrow; that is your job.</span>
             <button class="btn primary" id="send" type="submit">Send</button>
           </div>
           <span class="note" id="note" hidden></span>
@@ -191,6 +199,24 @@ function renderStart() {
 }
 
 /* ---------- chat screen ---------- */
+function coachItems(r) {
+  const items = [];
+  r.tone.forEach(x => items.push([x.msg, x.fix]));
+  r.spelling.forEach(x => items.push([`Spelling: “${x.word}”`, x.suggestion ? `Did you mean “${x.suggestion}”?` : "Check this word."]));
+  r.grammar.forEach(x => items.push([`Phrasing: “${x.found}”`, `Better: ${x.fix}. ${x.why}`]));
+  return items;
+}
+function coachEl(r) {
+  const d = document.createElement("aside");
+  const items = coachItems(r);
+  d.className = "coach " + (r.level === 2 ? "l2" : items.length ? "l1" : "ok");
+  const head = r.level === 2 ? "Writing coach · your client did not answer this e-mail" : items.length ? "Writing coach · tips for your next e-mail" : "Writing coach · clear and professional, well done";
+  d.innerHTML = `<b class="h"></b>${items.length ? "<ul></ul>" : ""}`;
+  d.querySelector(".h").textContent = head;
+  const ul = d.querySelector("ul");
+  items.forEach(([a, b]) => { const li = document.createElement("li"); li.innerHTML = "<span></span> <span class='fix'></span>"; li.children[0].textContent = a; li.children[1].textContent = b || ""; ul.appendChild(li); });
+  return d;
+}
 function msgEl(who, from, to, when, text, isNew) {
   const d = document.createElement("article");
   d.className = "msg " + who + (isNew ? " new" : "");
@@ -207,7 +233,10 @@ function renderChat(newIdx = -1) {
   $("tfrom").textContent = c.name; $("tsubject").textContent = c.subject;
   const box = $("msgs"); box.innerHTML = "";
   box.appendChild(msgEl("client", c.name, me, "First e-mail", c.email));
-  thread(c.id).forEach((m, i) => box.appendChild(msgEl(m.who, m.who === "advisor" ? me : c.name, m.who === "advisor" ? c.name : me, m.when, m.text, i === newIdx)));
+  thread(c.id).forEach((m, i) => {
+    box.appendChild(msgEl(m.who, m.who === "advisor" ? me : c.name, m.who === "advisor" ? c.name : me, m.when, m.text, i === newIdx));
+    if (m.who === "advisor" && m.coach) box.appendChild(coachEl(m.coach));
+  });
   box.scrollTop = box.scrollHeight;
 }
 
@@ -224,7 +253,11 @@ $("form").addEventListener("submit", async e => {
   const box = $("msgs"), typing = document.createElement("div");
   typing.className = "typing"; typing.textContent = c.sign + " is writing…"; box.appendChild(typing); box.scrollTop = box.scrollHeight;
   await new Promise(r => setTimeout(r, 900 + Math.random() * 900));
-  const reply = window.HousingCheckEngine.reply(c, text, window.HC_DATA.homes, S.advisor);
+  const E = window.HousingCheckEngine, LG = window.HousingCheckLanguage;
+  const check = LG && window.HC_WORDS ? LG.check(text, { allow: E.allowFor(c, window.HC_DATA.homes, S.advisor) }) : null;
+    const prevComplaints = t.slice(0, -1).filter(m => m.who === "advisor" && m.coach && m.coach.level === 2).length;
+  if (check) t[t.length - 1].coach = { level: check.level, tone: check.tone.map(x => ({ msg: x.msg, fix: x.fix })), spelling: check.spelling, grammar: check.grammar };
+  const reply = E.reply(c, text, window.HC_DATA.homes, S.advisor, { complaints: prevComplaints });
   typing.remove();
   t.push({ who: "client", text: reply, when: stamp() }); save();
   busy = false; $("send").disabled = false; renderChat(t.length - 1);
@@ -237,7 +270,8 @@ $("reset").addEventListener("click", () => {
 });
 $("copy").addEventListener("click", async () => {
   const c = byId(S.sel), me = S.advisor || "Advisor";
-  const all = [`From: ${c.name}\n${c.email}`, ...thread(c.id).map(m => `From: ${m.who === "advisor" ? me : c.name} (${m.when})\n${m.text}`)].join("\n\n---\n\n");
+  const coachTxt = m => m.coach ? "\n[Writing coach: " + (coachItems(m.coach).map(x => x.join(" ")).join(" | ") || "clear and professional") + "]" : "";
+  const all = [`From: ${c.name}\n${c.email}`, ...thread(c.id).map(m => `From: ${m.who === "advisor" ? me : c.name} (${m.when})\n${m.text}${m.who === "advisor" ? coachTxt(m) : ""}`)].join("\n\n---\n\n");
   try { await navigator.clipboard.writeText(all); $("copy").textContent = "Copied"; }
   catch (e) { $("copy").textContent = "Copy not allowed here"; }
   setTimeout(() => $("copy").textContent = "Copy conversation", 2000);
