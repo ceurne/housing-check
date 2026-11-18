@@ -28,7 +28,7 @@
   --client:#2A251C; --client-line:#4A3F2C; --warn:#F0A458; color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 32px}
-.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 h1,h2{font-family:var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
 h1{font-size:1.9rem;font-weight:800}
 h2{font-size:1.15rem;font-weight:600}
@@ -63,8 +63,9 @@ header p{margin:4px 0 0;color:var(--muted);max-width:64ch}
 .btn:disabled{opacity:.5;cursor:default}
 .mode{font-size:.74rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted)}
 .mode.ai{background:var(--accent-soft);color:var(--accent)}
-.msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;max-height:560px}
-.msg{border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;max-width:680px;min-width:0}
+.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;height:calc(100vh - 400px);min-height:460px}
+.msgs::after{content:"";flex:none;height:2px}
+.msg{border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;max-width:860px;min-width:0}
 .msg.client{background:var(--client);border-color:var(--client-line);align-self:flex-start}
 .msg.advisor{background:var(--surface);align-self:flex-end}
 .meta{display:flex;justify-content:space-between;gap:12px;font-size:.76rem;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
@@ -72,16 +73,24 @@ header p{margin:4px 0 0;color:var(--muted);max-width:64ch}
 .body{white-space:pre-wrap;overflow-wrap:anywhere}
 .typing{color:var(--muted);font-style:italic;font-size:.88rem;align-self:flex-start}
 .compose{border-top:1px solid var(--line);padding:14px 18px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
-.compose textarea{width:100%;min-height:110px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.compose textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--bg)}
 .crow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
 .hint{font-size:.78rem;color:var(--muted);max-width:60ch}
 .note{font-size:.8rem;color:var(--warn)}
 footer{color:var(--muted);font-size:.78rem;max-width:90ch}
-.coach{align-self:flex-end;max-width:680px;width:100%;border:1px dashed var(--line);border-radius:var(--r);padding:10px 14px;font-size:.84rem;background:var(--bg)}
-.coach b.h{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.coach.ok b.h{color:var(--accent)} .coach.l1 b.h{color:var(--warn)} .coach.l2 b.h{color:#B23A35}
-.coach ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
-.coach .fix{color:var(--muted)}
+.coach{align-self:stretch;border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:var(--r);padding:12px 16px;font-size:.88rem;background:var(--surface)}
+.coach.l1{border-left-color:var(--warn)} .coach.l2{border-left-color:#B23A35}
+.coach .h{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.coach .h .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.coach .h b{font-size:.98rem}
+.coach.ok .h b{color:var(--accent)} .coach.l1 .h b{color:var(--warn)} .coach.l2 .h b{color:#B23A35}
+.coach .cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+@media (max-width:700px){.coach .cols{grid-template-columns:1fr}}
+.coach h3{margin:0 0 4px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.coach ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.coach li{display:flex;gap:7px;align-items:baseline}
+.coach li i{font-style:normal;flex:none;width:1.1em;font-weight:700}
+.coach .good i{color:var(--accent)} .coach .bad i{color:#B23A35} .coach .next i{color:var(--accent)}
 
 .start{display:flex;flex-direction:column;gap:18px}
 .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px}
@@ -149,7 +158,7 @@ footer{color:var(--muted);font-size:.78rem;max-width:90ch}
           <label for="text" class="eyebrow">Your reply</label>
           <textarea id="text" placeholder="Dear …,&#10;&#10;Thank you for your e-mail. I have a question about …"></textarea>
           <div class="crow">
-            <span class="hint">Write a formal e-mail in English: start with “Dear …,”, end with “Kind regards,” and your name, and check your spelling. Your client expects a professional advisor. Ask one or two clear questions per e-mail. Mention a listing number (for example NH-057) to ask what your client thinks of a home. Your client does not know how much they can borrow; that is your job.</span>
+            <span class="hint">Write a formal e-mail in English: start with “Dear Mr …,” or “Dear Ms …,” and the surname, end with “Kind regards,” and your name, write words in full (do not, not don’t) and check your spelling. Your client expects a professional advisor. Ask one or two clear questions per e-mail. Mention a listing number (for example NH-057) to ask what your client thinks of a home. Your client does not know how much they can borrow; that is your job.</span>
             <button class="btn primary" id="send" type="submit">Send</button>
           </div>
           <span class="note" id="note" hidden></span>
@@ -176,7 +185,7 @@ let busy = false;
 
 /* ---------- start screen ---------- */
 function renderStart() {
-  $("start").hidden = false; $("chat").hidden = true;
+  $("start").hidden = false; $("chat").hidden = true; document.querySelector("header").hidden = false;
   $("advisor").value = S.advisor;
   const box = $("cards"); box.innerHTML = "";
   CLIENTS.forEach((c, i) => {
@@ -200,21 +209,30 @@ function renderStart() {
 
 /* ---------- chat screen ---------- */
 function coachItems(r) {
-  const items = [];
-  r.tone.forEach(x => items.push([x.msg, x.fix]));
-  r.spelling.forEach(x => items.push([`Spelling: “${x.word}”`, x.suggestion ? `Did you mean “${x.suggestion}”?` : "Check this word."]));
-  r.grammar.forEach(x => items.push([`Phrasing: “${x.found}”`, `Better: ${x.fix}. ${x.why}`]));
-  return items;
+  // issues (feedback) and what to do next time (feedforward)
+  const bad = [], next = [];
+  (r.tone || []).forEach(x => { bad.push(x.msg); if (x.fix) next.push(x.fix); });
+  (r.spelling || []).forEach(x => { bad.push(`Spelling: “${x.word}”.`); next.push(x.suggestion ? `Write “${x.suggestion}” instead of “${x.word}”.` : `Check the spelling of “${x.word}”.`); });
+  (r.grammar || []).forEach(x => { bad.push(`Phrasing: “${x.found}”.`); next.push(`Write: ${x.fix}. ${x.why}`); });
+  return { bad, next: [...new Set(next)], good: r.good || [] };
 }
 function coachEl(r) {
   const d = document.createElement("aside");
-  const items = coachItems(r);
-  d.className = "coach " + (r.level === 2 ? "l2" : items.length ? "l1" : "ok");
-  const head = r.level === 2 ? "Writing coach · your client did not answer this e-mail" : items.length ? "Writing coach · tips for your next e-mail" : "Writing coach · clear and professional, well done";
-  d.innerHTML = `<b class="h"></b>${items.length ? "<ul></ul>" : ""}`;
-  d.querySelector(".h").textContent = head;
-  const ul = d.querySelector("ul");
-  items.forEach(([a, b]) => { const li = document.createElement("li"); li.innerHTML = "<span></span> <span class='fix'></span>"; li.children[0].textContent = a; li.children[1].textContent = b || ""; ul.appendChild(li); });
+  const { bad, next, good } = coachItems(r);
+  const cls = r.level === 2 ? "l2" : bad.length ? "l1" : "ok";
+  d.className = "coach " + cls;
+  const head = r.level === 2 ? "Your client did not answer. Your e-mail was too informal or had too many mistakes."
+    : bad.length ? "Your client answered, but your e-mail can be more professional."
+    : "Professional e-mail. Your client answered.";
+  d.innerHTML = `<div class="h"><span class="k">Writing coach</span><b></b></div><div class="cols"><div><h3>Feedback</h3><ul class="fb"></ul></div><div><h3>Feedforward: in your next e-mail</h3><ul class="ff"></ul></div></div>`;
+  d.querySelector(".h b").textContent = head;
+  const li = (ul, cls, mark, text) => { const e = document.createElement("li"); e.className = cls; e.innerHTML = "<i></i><span></span>"; e.children[0].textContent = mark; e.children[1].textContent = text; ul.appendChild(e); };
+  const fb = d.querySelector(".fb"), ff = d.querySelector(".ff");
+  good.forEach(t => li(fb, "good", "✓", t));
+  bad.forEach(t => li(fb, "bad", "✗", t));
+  if (!good.length && !bad.length) li(fb, "good", "✓", "Clear and professional.");
+  if (next.length) next.forEach(t => li(ff, "next", "→", t));
+  else li(ff, "next", "→", "Keep this up: a formal greeting, polite questions and a closing.");
   return d;
 }
 function msgEl(who, from, to, when, text, isNew) {
@@ -227,15 +245,18 @@ function msgEl(who, from, to, when, text, isNew) {
 }
 function renderChat(newIdx = -1) {
   const c = byId(S.sel); if (!c) return renderStart();
-  $("start").hidden = true; $("chat").hidden = false;
+  $("start").hidden = true; $("chat").hidden = false; document.querySelector("header").hidden = true;
   const me = S.advisor || "Advisor";
   $("barAv").textContent = initials(c.short); $("barName").textContent = c.short + " · " + c.from; $("barMe").textContent = "Advisor: " + me;
   $("tfrom").textContent = c.name; $("tsubject").textContent = c.subject;
   const box = $("msgs"); box.innerHTML = "";
   box.appendChild(msgEl("client", c.name, me, "First e-mail", c.email));
-  thread(c.id).forEach((m, i) => {
+  const t = thread(c.id);
+  t.forEach((m, i) => {
     box.appendChild(msgEl(m.who, m.who === "advisor" ? me : c.name, m.who === "advisor" ? c.name : me, m.when, m.text, i === newIdx));
-    if (m.who === "advisor" && m.coach) box.appendChild(coachEl(m.coach));
+    // the feedback on an e-mail appears under the client's reply, so it is the last thing on screen
+    const prev = t[i - 1];
+    if (m.who === "client" && prev && prev.who === "advisor" && prev.coach) box.appendChild(coachEl(prev.coach));
   });
   box.scrollTop = box.scrollHeight;
 }
@@ -254,9 +275,9 @@ $("form").addEventListener("submit", async e => {
   typing.className = "typing"; typing.textContent = c.sign + " is writing…"; box.appendChild(typing); box.scrollTop = box.scrollHeight;
   await new Promise(r => setTimeout(r, 900 + Math.random() * 900));
   const E = window.HousingCheckEngine, LG = window.HousingCheckLanguage;
-  const check = LG && window.HC_WORDS ? LG.check(text, { allow: E.allowFor(c, window.HC_DATA.homes, S.advisor) }) : null;
+  const check = LG && window.HC_WORDS ? LG.check(text, E.checkOpts(c, window.HC_DATA.homes, S.advisor)) : null;
     const prevComplaints = t.slice(0, -1).filter(m => m.who === "advisor" && m.coach && m.coach.level === 2).length;
-  if (check) t[t.length - 1].coach = { level: check.level, tone: check.tone.map(x => ({ msg: x.msg, fix: x.fix })), spelling: check.spelling, grammar: check.grammar };
+  if (check) t[t.length - 1].coach = { level: check.level, tone: check.tone.map(x => ({ msg: x.msg, fix: x.fix })), spelling: check.spelling, grammar: check.grammar, good: check.good };
   const reply = E.reply(c, text, window.HC_DATA.homes, S.advisor, { complaints: prevComplaints });
   typing.remove();
   t.push({ who: "client", text: reply, when: stamp() }); save();
@@ -270,7 +291,7 @@ $("reset").addEventListener("click", () => {
 });
 $("copy").addEventListener("click", async () => {
   const c = byId(S.sel), me = S.advisor || "Advisor";
-  const coachTxt = m => m.coach ? "\n[Writing coach: " + (coachItems(m.coach).map(x => x.join(" ")).join(" | ") || "clear and professional") + "]" : "";
+  const coachTxt = m => { if (!m.coach) return ""; const k = coachItems(m.coach); return "\n[Writing coach · " + (m.coach.level === 2 ? "client did not answer" : "client answered") + " · Feedback: " + ([...k.good.map(x => "✓ " + x), ...k.bad.map(x => "✗ " + x)].join(" ") || "clear and professional") + (k.next.length ? " · Feedforward: " + k.next.join(" ") : "") + "]"; };
   const all = [`From: ${c.name}\n${c.email}`, ...thread(c.id).map(m => `From: ${m.who === "advisor" ? me : c.name} (${m.when})\n${m.text}${m.who === "advisor" ? coachTxt(m) : ""}`)].join("\n\n---\n\n");
   try { await navigator.clipboard.writeText(all); $("copy").textContent = "Copied"; }
   catch (e) { $("copy").textContent = "Copy not allowed here"; }

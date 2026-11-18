@@ -58,6 +58,12 @@
     [/\bdo you (has|is|are)\b/i, "do you have / are you", "After 'do you', use the base form of the verb."],
     [/\bdoes (he|she|it|your \w+) (has|is|wants|needs)\b/i, "does … have / want / need", "After 'does', use the base form (have, want, need)."],
     [/\b(\d+|two|three|four|five|six) bedroom\b(?!s)/i, "… bedrooms", "Plural after a number: three bedrooms."],
+    [/\bhereby (i|we) (send|sent|give|inform)\b/i, "Please find … below", "'Hereby I send you' is a Dutch construction (hierbij)."],
+    [/\bin the (attachment|appendix) (you )?(can |will )?find\b/i, "Please find … attached", "'In the attachment you find' is a Dutch construction (in de bijlage)."],
+    [/\b(an|one) advice\b/i, "advice / our advice", "'Advice' is uncountable: no 'an'."],
+    [/\bwith (friendly|kind) greetings?\b/i, "Kind regards", "'With friendly greetings' is a Dutch translation (met vriendelijke groet)."],
+    [/\b(the )?rent (rate|percentage|will (go up|rise|increase|go down|fall)|rises|goes up|increases|of \d+([.,]\d+)? ?%|is \d+([.,]\d+)? ?%)/i, "the interest rate", "'Rent' is huur; 'rente' is the interest rate."],
+    [/\beventually\b/i, "possibly / if necessary", "'Eventually' means 'uiteindelijk'. For 'eventueel', write 'possibly' or 'if necessary'."],
   ];
 
   // Words that are fine even if they are not in the dictionary
@@ -67,7 +73,7 @@
     fulltime: "full-time", parttime: "part-time", nessecary: "necessary", neccessary: "necessary", necesary: "necessary", neccesary: "necessary",
     portugese: "Portuguese", netherland: "the Netherlands", netto: "net", bruto: "gross", appartement: "apartment", appartment: "apartment", adres: "address",
     hypotheek: "mortgage", salaris: "salary", rente: "interest rate", huis: "house", woning: "home", tuin: "garden", makelaar: "estate agent",
-    sincerly: "sincerely", regars: "regards", untill: "until", wich: "which", alot: "a lot", ofcourse: "of course", definately: "definitely", seperate: "separate" };
+    sincerly: "sincerely", lookt: "looked", workt: "worked", askt: "asked", importand: "important", importent: "important", recieve: "receive", adress: "address", regars: "regards", untill: "until", wich: "which", alot: "a lot", ofcourse: "of course", definately: "definitely", seperate: "separate" };
   const DUTCH_WORDS = ["ik","jullie","het","een","niet","wij","heeft","hebben","graag","vriendelijke","beste","kunt","woning","huis","uw","jij","bent","wat","hoe","welke","vraag","hoeveel","wilt","lenen","meneer","mevrouw","groetjes","bedankt","alvast","zou","kunnen","willen","waarom","wanneer","tuin","huur"];
 
   function edits1(w) {
@@ -104,21 +110,34 @@
     const addTone = (kind, weight, msg, fix) => tone.push({ kind, weight, msg, fix });
 
     // greeting
-    if (BAD_GREET.test(first)) addTone("greeting", 2, `“${first.split(/[\s,!]/)[0]}” is too informal for a business e-mail.`, "Start with “Dear Mr Kowalski,” or “Dear Mateus,”.");
-    else if (OK_GREET.test(first)) addTone("greeting", 1, "“Hi” is friendly, but a little informal for a client you do not know well.", "Start with “Dear …,”.");
-    else if (!GOOD_GREET.test(first)) addTone("greeting", 1, "Your e-mail has no greeting.", "Start with “Dear …,” and the client's name.");
+    const formal = opts.formal || "Mr …";
+    const firstNames = new Set([...(opts.firstNames || [])].map(x => x.toLowerCase()));
+    const dearName = (first.match(/^(?:dear|hello|good (?:morning|afternoon|evening))\s+([A-Za-zÀ-ÿ'-]+)/i) || [])[1] || "";
+    let greetOK = false;
+    if (BAD_GREET.test(first)) addTone("greeting", 2, `“${first.split(/[\s,!]/)[0]}” is too informal for a business e-mail.`, `Start with “Dear ${formal},”.`);
+    else if (OK_GREET.test(first)) addTone("greeting", 1, "“Hi” is too informal for a client you do not know well.", `Start with “Dear ${formal},”.`);
+    else if (!GOOD_GREET.test(first)) addTone("greeting", 1, "Your e-mail has no greeting.", `Start with “Dear ${formal},”.`);
+    else if (dearName && firstNames.has(dearName.toLowerCase())) addTone("firstname", 1, `“Dear ${dearName},” is too personal for a new client.`, `Use the title and surname: “Dear ${formal},”.`);
+    else greetOK = /^dear\b/i.test(first);
+    if (/^dear\s+(mr|ms|mrs)\./i.test(first)) addTone("mrdot", 0, "In British English there is no full stop after Mr, Ms and Mrs.", `Write “Dear ${formal},”.`);
     // closing
+    let closeOK = false;
     if (BAD_CLOSE.test(lastLines)) addTone("closing", 2, "Your closing is too informal.", "End with “Kind regards,” and your name.");
-    else if (!GOOD_CLOSE.test(lastLines) && lines.length > 0) addTone("closing", 1, "Your e-mail has no closing.", "End with “Kind regards,” and your name on the next line.");
+    else if (GOOD_CLOSE.test(lastLines)) closeOK = true;
+    else if (lines.slice(-2).some(l => /^(thanks|thank you|thx)\s*[,.!]?$/i.test(l)))
+      addTone("closing", 1, "“Thanks,” is too informal to end a formal e-mail.", "End with “Kind regards,” and your name on the next line.");
+    else if (lines.length > 0) addTone("closing", 1, "Your e-mail has no closing.", "End with “Kind regards,” and your name on the next line.");
     // text speak and slang
     const words = t.toLowerCase().match(/[a-z']+/g) || [];
     const ts = [...new Set(words.filter(w => TEXTSPEAK[w] && !(w === "k" && /\bk\.?m\b/i.test(t))))];
-    if (ts.length) addTone("textspeak", 2, `Text speak or slang: ${ts.map(w => "“" + w + "”").join(", ")}.`, ts.map(w => `${w} → ${TEXTSPEAK[w]}`).join("; "));
-    if (EMOJI.test(t)) addTone("emoji", 2, "Emojis or smileys do not belong in a business e-mail.", "Leave them out.");
-    if (/!{2,}|\?{2,}/.test(t)) addTone("punct", 2, "Several exclamation marks or question marks in a row look unprofessional.", "Use one.");
+    if (ts.length) addTone("textspeak", 2, `Text speak or slang: ${ts.map(w => "“" + w + "”").join(", ")}.`, "Write words in full: " + ts.map(w => `${w} → ${TEXTSPEAK[w]}`).join("; ") + ".");
+    const contr = [...new Set((t.replace(/[’‘]/g, "'").match(/\b[A-Za-z]+(n't|'re|'ve|'ll|'m|'d)\b|\b(it|that|what|there|let|here|he|she)'s\b/gi) || []).map(x => x.toLowerCase()))];
+    if (contr.length) addTone("contraction", 1, `Short forms (${contr.slice(0, 3).map(w => "“" + w + "”").join(", ")}) are informal in a formal e-mail.`, "Write them in full: cannot, do not, we are, it is.");
+    if (EMOJI.test(t)) addTone("emoji", 2, "Emojis or smileys do not belong in a business e-mail.", "Leave out emojis and smileys.");
+    if (/!{2,}|\?{2,}/.test(t)) addTone("punct", 2, "Several exclamation marks or question marks in a row look unprofessional.", "Use at most one exclamation mark or question mark.");
     const caps = (t.match(/\b[A-Z]{4,}\b/g) || []).filter(w => !/^(NHG|BKR|EUR|NOTE|ASAP)$/.test(w));
-    if (caps.length) addTone("caps", 2, `Words in capitals (${caps.slice(0, 3).join(", ")}) read as shouting.`, "Write them in normal letters.");
-    if (/(^|[\s.!?])i([\s',]|$)/.test(t)) addTone("lowerI", 2, "“i” should always be a capital “I”.", "Write “I”.");
+    if (caps.length) addTone("caps", 2, `Words in capitals (${caps.slice(0, 3).join(", ")}) read as shouting.`, "Write words in normal letters, not in capitals.");
+    if (/(^|[\s.!?])i([\s',]|$)/.test(t)) addTone("lowerI", 2, "“i” should always be a capital “I”.", "Always write “I” as a capital letter.");
     const sents = t.split(/(?<=[.?!])\s+|\n+/).map(s => s.trim()).filter(s => /[a-z]/i.test(s));
     const lowerStarts = sents.filter(s => /^[a-z]/.test(s)).length;
     if (sents.length >= 2 && lowerStarts / sents.length >= 0.5) addTone("lowercase", 2, "Many sentences start with a small letter.", "Start every sentence with a capital letter.");
@@ -129,13 +148,25 @@
     // spelling
     dict();
     const extra = new Set([...(opts.allow || [])].map(s => s.toLowerCase()));
+    const extraHas = w => extra.has(w) || EXTRA_OK.has(w) || !!TEXTSPEAK[w];
     const spelling = [];
-    const tokens = t.match(/[A-Za-zÀ-ÿ'’-]+/g) || [];
     const seen = new Set();
-    for (const raw of tokens) {
+    for (const mt of t.matchAll(/[A-Za-zÀ-ÿ'’-]+/g)) {
+      const raw = mt[0];
       let w = raw.replace(/[’]/g, "'").replace(/^['-]+|['-]+$/g, "");
       if (!w || w.length < 2) continue;
-      if (/^[A-Z]/.test(w)) { if (w === w.toUpperCase() || !known(w.toLowerCase())) continue; } // names, places, acronyms
+      if (/^[A-Z]/.test(w)) {
+        if (w === w.toUpperCase()) continue; // acronyms
+        if (!known(w.toLowerCase())) {
+          // a capitalised unknown word is usually a name; only flag it at the start of a sentence when it is clearly a misspelt common word
+          const inSignature = t.slice(mt.index).split("\n").length <= 2; // names of the advisors at the end
+          if (inSignature || w.length < 4) continue;
+          const before = t.slice(0, mt.index).trimEnd();
+          const startOfSentence = before === "" || /[.?!:]$/.test(before) || /\n\s*$/.test(t.slice(0, mt.index));
+          const lw0 = w.toLowerCase();
+          if (!(startOfSentence && !extraHas(lw0) && (FIX[lw0] || ((s => s && RANK.get(s) < 3000)(suggest(lw0)))))) continue;
+        }
+      }
       const lw = w.toLowerCase();
       if (["hoi","hallo","hey","heyy","hai"].includes(lw)) continue;
       if (lw === "netherlands" || lw === "holland" || lw === "dutch" || lw === "english") continue;
@@ -152,14 +183,25 @@
       const m = t.match(re);
       if (m) grammar.push({ found: m[0], fix, why });
     }
+    // a word that is already explained as a phrasing mistake is not listed again as a spelling mistake
+    const gtext = grammar.map(g => g.found.toLowerCase()).join(" ");
+    for (let i = spelling.length - 1; i >= 0; i--) if (gtext.includes(spelling[i].word.toLowerCase())) spelling.splice(i, 1);
     const toneHeavy = tone.filter(x => x.weight === 2).length, toneMinor = tone.filter(x => x.weight === 1).length;
     const lang = spelling.length + grammar.length;
-    const density = words.length ? lang / words.length : 0;
+    // strict: one clearly informal element, or two small ones, and the client does not answer
     let level = 0;
-    if (toneHeavy >= 2 || (toneHeavy >= 1 && toneMinor >= 2) || lang >= 6 || (lang >= 4 && density > 0.12) || (toneHeavy >= 1 && lang >= 3)) level = 2;
-    else if (toneHeavy >= 1 || toneMinor >= 1 || lang >= 2) level = 1;
-    const reason = level === 0 ? null : (lang >= 4 && toneHeavy === 0) || (lang >= 2 && toneHeavy === 0 && toneMinor === 0) ? "language" : "tone";
-    return { level, reason, tone, spelling, grammar, wordCount: words.length };
+    if (toneHeavy >= 1 || toneMinor >= 2 || lang >= 3 || (toneMinor >= 1 && lang >= 2)) level = 2;
+    else if (toneMinor >= 1 || lang >= 1) level = 1;
+    const reason = level === 0 ? null : (toneHeavy === 0 && toneMinor <= 1 && lang >= 2) || (toneHeavy === 0 && toneMinor === 0) ? "language" : "tone";
+    // what went well (for the feedback)
+    const good = [];
+    if (greetOK && !tone.some(x => x.kind === "mrdot")) good.push("Formal greeting with the client's name.");
+    else if (greetOK) good.push("Formal greeting.");
+    if (closeOK) good.push("Polite closing.");
+    if (/\b(could|would) you( please)?\b|\bplease\b|\b(we|i) would like to\b|\bmay (we|i)\b/i.test(t)) good.push("Polite way of asking.");
+    if (!lang && words.length >= 8 && !tone.some(x => ["textspeak", "lowercase", "lowerI", "caps", "dutch"].includes(x.kind))) good.push("No spelling or phrasing mistakes found.");
+    if (words.length >= 15 && !tone.some(x => ["lowercase", "nopunct", "lowerI", "caps"].includes(x.kind))) good.push("Full sentences with capital letters and punctuation.");
+    return { level, reason, tone, spelling, grammar, good, wordCount: words.length };
   }
 
   root.HousingCheckLanguage = { check, suggest };

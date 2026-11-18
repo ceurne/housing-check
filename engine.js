@@ -219,6 +219,12 @@
     CITY_NAMES.forEach(addWords);
     return (ALLOW[key] = s);
   }
+  // How the client should be addressed in a formal e-mail, and the first names that are too personal for a new client
+  const FORMAL = { silva: "Mr Silva", tanaka: "Ms Tanaka", mensah: "Ms Becker", hughes: "Ms Hughes", kowalski: "Mr Kowalski", haddad: "Ms Haddad", park: "Mr Reyes", tremblay: "Ms Tremblay" };
+  const FIRST_NAMES = "Mateus Joana Aiko Kwame Lena Olivia Tomasz Marta Amira Daniel Ji-woo Sophie".split(" ");
+  function checkOpts(c, homes, advisor) {
+    return { allow: allowFor(c, homes, advisor), formal: FORMAL[c.id] || ("Mr " + String(c.name).split(" ").pop()), firstNames: FIRST_NAMES };
+  }
   function languageReply(c, L, ctx) {
     const n = (ctx && ctx.complaints) || 0;
     const what = L.reason === "language"
@@ -234,17 +240,20 @@
     const greet = "Dear " + (advisor || "advisor") + ",";
     const close = "\n\nKind regards,\n" + c.sign;
     const wrap = body => greet + "\n\n" + body + close;
-    const t = text.trim();
+    let t = text.trim();
     if (looksDutch(t)) return wrap(fill(c.common.dutch, c));
     if (RUDE.test(t)) return wrap(fill(c.common.rude, c));
-    const LANG = root.HousingCheckLanguage && root.HC_WORDS ? root.HousingCheckLanguage.check(t, { allow: allowFor(c, homes, advisor) }) : { level: 0 };
+    const LANG = root.HousingCheckLanguage && root.HC_WORDS ? root.HousingCheckLanguage.check(t, checkOpts(c, homes, advisor)) : { level: 0 };
     if (LANG.level === 2) return wrap(languageReply(c, LANG, ctx));
     const opener = ctx && ctx.complaints > 0 && LANG.level === 0 ? fill("Thank you for your clear and professional e-mail. ", c) : "";
-    const remark = LANG.level === 1
-      ? fill(LANG.reason === "language"
-        ? "P.S. Some parts of your e-mail were a little hard for {us} to understand, but I think I know what you mean."
-        : "P.S. Your e-mail felt a little informal. {We} are about to make a big decision, so {we} appreciate a professional tone.", c)
-      : "";
+    const remark = ""; // feedback on language is shown by the writing coach under the reply, not by the client
+    // read past small spelling mistakes, so that "Wich wish …" is still understood as "Which wish …"
+    (LANG.spelling || []).forEach(sp => {
+      if (!sp.suggestion) return;
+      const fix = sp.suggestion.split(/[ (]/)[0];
+      const esc = sp.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      t = t.replace(new RegExp("\\b" + esc + "\\b", "g"), m => /^[A-Z]/.test(m) ? fix[0].toUpperCase() + fix.slice(1) : fix);
+    });
 
     const body = stripFrame(t);
     const parts = [];
@@ -349,5 +358,5 @@
     return wrap((opener || "Thank you for your e-mail. ").trim() + "\n\n" + picked.join("\n\n") + (remark ? "\n\n" + remark : "")).replace(/\bI are\b/g, "I am");
   }
 
-  root.HousingCheckEngine = { reply, listingsIn, citiesIn, allowFor };
+  root.HousingCheckEngine = { reply, listingsIn, citiesIn, allowFor, checkOpts };
 })(typeof window !== "undefined" ? window : globalThis);
